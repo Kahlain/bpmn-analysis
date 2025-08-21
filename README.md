@@ -1,6 +1,8 @@
-# 📊 BPMN Business Analysis Tool
+# 📊 Inocta BPM Analysis
 
 A powerful, interactive web application for analyzing BPMN (Business Process Model and Notation) XML files to extract business insights, calculate costs, and provide comprehensive KPI analysis for process optimization.
+
+> **🌐 Public Repository**: This project is now open source and available for the community!
 
 ## 🚀 Features
 
@@ -23,6 +25,7 @@ A powerful, interactive web application for analyzing BPMN (Business Process Mod
 - **Interactive Charts**: Pie charts, bar charts, scatter plots, and heatmaps
 - **Executive Summary**: High-level KPIs and insights dashboard
 - **Export Options**: Excel, CSV, JSON, and Markdown formats
+- **Focused Exports**: Issues & Opportunities only, Tasks only, or Complete Analysis
 - **Real-time Analysis**: Instant insights as you upload files
 
 ## 🛠️ Technology Stack
@@ -44,7 +47,7 @@ A powerful, interactive web application for analyzing BPMN (Business Process Mod
 
 ### 1. **Clone the Repository**
 ```bash
-git clone https://github.com/yourusername/bpmn-analysis.git
+git clone https://github.com/Kahlain/bpmn-analysis.git
 cd bpmn-analysis
 ```
 
@@ -70,6 +73,72 @@ run_app.bat
 
 ### 4. **Access the App**
 Open your browser and navigate to: `http://localhost:8501`
+
+## 🌐 Deployment Options
+
+### **Local Development**
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the app
+streamlit run bpmn_analyzer.py
+```
+
+### **Cloud Deployment**
+
+#### **Vercel/Netlify**
+1. **Fork this repository**
+2. **Use `requirements-deploy.txt`** instead of `requirements.txt`
+3. **Set Python version** to 3.11
+4. **Build command**: `pip install -r requirements-deploy.txt`
+5. **Deploy!**
+
+#### **Heroku**
+1. **Fork this repository**
+2. **The `Procfile` will automatically configure the app**
+3. **Use `requirements-deploy.txt`**
+4. **Set Python version** via `runtime.txt`
+5. **Deploy!**
+
+#### **Replit**
+1. **Fork this repository**
+2. **Use `requirements-deploy.txt`**
+3. **Set Python version** to 3.11
+4. **The `setup.py` will help with dependencies**
+5. **Deploy!**
+
+#### **Streamlit Cloud**
+1. **Connect your GitHub repository**
+2. **Use `requirements-deploy.txt`**
+3. **Set Python version** to 3.11
+4. **Deploy automatically!**
+
+### **Deployment Files**
+- `requirements-deploy.txt` - Deployment-optimized dependencies
+- `runtime.txt` - Python version specification
+- `setup.py` - Package metadata and dependencies
+- `Procfile` - Heroku deployment configuration
+- `.streamlit/config.toml` - Streamlit deployment settings
+
+## 🤝 Contributing
+
+This is now a **public open-source project**! We welcome contributions from the community.
+
+### **How to Contribute**
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes**
+4. **Commit your changes**: `git commit -m 'Add amazing feature'`
+5. **Push to the branch**: `git push origin feature/amazing-feature`
+6. **Open a Pull Request**
+
+### **What We're Looking For**
+- 🐛 Bug fixes and improvements
+- ✨ New features and enhancements
+- 📚 Documentation improvements
+- 🧪 Testing and quality assurance
+- 🌍 Localization and internationalization
 
 ## 📁 Project Structure
 
@@ -150,6 +219,12 @@ Identifies missing or incomplete data with priority classification:
 ### **Multi-Language Support**
 Built-in support for English and French content analysis, making it suitable for international organizations.
 
+### **Advanced Export Options**
+- **Complete Analysis**: All data with comprehensive insights
+- **Tasks Only**: Raw task data for detailed review
+- **Summary Only**: Key metrics and high-level insights
+- **Issues & Opportunities Only**: Focused export of improvement areas and risks
+
 ### **Real-time Analysis**
 Instant insights as you upload files, with no need to wait for batch processing.
 
@@ -196,7 +271,7 @@ We welcome contributions! Please feel free to:
 
 ### **Development Setup**
 ```bash
-git clone https://github.com/yourusername/bpmn-analysis.git
+git clone https://github.com/Kahlain/bpmn-analysis.git
 cd bpmn-analysis
 pip install -r requirements.txt
 pip install -e .
@@ -215,9 +290,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/bpmn-analysis/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/bpmn-analysis/discussions)
-- **Wiki**: [Project Wiki](https://github.com/yourusername/bpmn-analysis/wiki)
+- **Issues**: [GitHub Issues](https://github.com/Kahlain/bpmn-analysis/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Kahlain/bpmn-analysis/discussions)
+- **Wiki**: [Project Wiki](https://github.com/Kahlain/bpmn-analysis/wiki)
 
 ## 🔄 Version History
 
