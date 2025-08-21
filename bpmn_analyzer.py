@@ -2204,7 +2204,7 @@ def main():
                         
                         export_scope = st.selectbox(
                             "Select export scope:",
-                            ["Complete Analysis", "Tasks Only", "Summary Only"]
+                            ["Complete Analysis", "Tasks Only", "Summary Only", "Issues & Opportunities Only"]
                         )
                     
                     with col2:
@@ -2230,6 +2230,49 @@ def main():
                                     with pd.ExcelWriter(filename, engine='openpyxl') as writer:
                                         tasks_df.to_excel(writer, sheet_name='Tasks', index=False)
                                     st.success(f"✅ Tasks Excel report generated: {filename}")
+                                elif export_scope == "Issues & Opportunities Only":
+                                    # Export only issues and opportunities data
+                                    issues_opportunities_data = []
+                                    for task in combined_tasks:
+                                        # Add opportunities
+                                        opportunities = task.get('opportunities', '')
+                                        if opportunities and opportunities.strip():
+                                            issues_opportunities_data.append({
+                                                'Type': 'Opportunity',
+                                                'Task Name': task.get('name', 'Unknown'),
+                                                'Department': task.get('swimlane', 'Unknown'),
+                                                'Owner': task.get('task_owner', 'Unknown'),
+                                                'Content': opportunities,
+                                                'Current Cost': task.get('total_cost', 0),
+                                                'Current Time (hrs)': task.get('time_hours', 0),
+                                                'Status': task.get('task_status', 'Unknown'),
+                                                'Tools Used': task.get('tools_used', 'N/A')
+                                            })
+                                        
+                                        # Add issues
+                                        issues_text = task.get('issues_text', '')
+                                        if issues_text and issues_text.strip():
+                                            issues_opportunities_data.append({
+                                                'Type': 'Issue/Risk',
+                                                'Task Name': task.get('name', 'Unknown'),
+                                                'Department': task.get('swimlane', 'Unknown'),
+                                                'Owner': task.get('task_owner', 'Unknown'),
+                                                'Content': issues_text,
+                                                'Priority': task.get('issues_priority', 'Unknown'),
+                                                'Current Cost': task.get('total_cost', 0),
+                                                'Current Time (hrs)': task.get('time_hours', 0),
+                                                'Status': task.get('task_status', 'Unknown'),
+                                                'Tools Used': task.get('tools_used', 'N/A')
+                                            })
+                                    
+                                    if issues_opportunities_data:
+                                        issues_df = pd.DataFrame(issues_opportunities_data)
+                                        with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+                                            issues_df.to_excel(writer, sheet_name='Issues_Opportunities', index=False)
+                                        st.success(f"✅ Issues & Opportunities Excel report generated: {filename}")
+                                    else:
+                                        st.warning("⚠️ No issues or opportunities found in the data")
+                                        return
                                 else:  # Summary Only
                                     # Export summary metrics
                                     summary_data = {
@@ -2297,6 +2340,53 @@ def main():
                                         file_name=f"bpmn_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
                                         mime="application/zip"
                                     )
+                                elif export_scope == "Issues & Opportunities Only":
+                                    # Export only issues and opportunities data
+                                    issues_opportunities_data = []
+                                    for task in combined_tasks:
+                                        # Add opportunities
+                                        opportunities = task.get('opportunities', '')
+                                        if opportunities and opportunities.strip():
+                                            issues_opportunities_data.append({
+                                                'Type': 'Opportunity',
+                                                'Task Name': task.get('name', 'Unknown'),
+                                                'Department': task.get('swimlane', 'Unknown'),
+                                                'Owner': task.get('task_owner', 'Unknown'),
+                                                'Content': opportunities,
+                                                'Current Cost': task.get('total_cost', 0),
+                                                'Current Time (hrs)': task.get('time_hours', 0),
+                                                'Status': task.get('task_status', 'Unknown'),
+                                                'Tools Used': task.get('tools_used', 'N/A')
+                                            })
+                                        
+                                        # Add issues
+                                        issues_text = task.get('issues_text', '')
+                                        if issues_text and issues_text.strip():
+                                            issues_opportunities_data.append({
+                                                'Type': 'Issue/Risk',
+                                                'Task Name': task.get('name', 'Unknown'),
+                                                'Department': task.get('swimlane', 'Unknown'),
+                                                'Owner': task.get('task_owner', 'Unknown'),
+                                                'Content': issues_text,
+                                                'Priority': task.get('issues_priority', 'Unknown'),
+                                                'Current Cost': task.get('total_cost', 0),
+                                                'Current Time (hrs)': task.get('time_hours', 0),
+                                                'Status': task.get('task_status', 'Unknown'),
+                                                'Tools Used': task.get('tools_used', 'N/A')
+                                            })
+                                    
+                                    if issues_opportunities_data:
+                                        issues_df = pd.DataFrame(issues_opportunities_data)
+                                        csv_data = issues_df.to_csv(index=False)
+                                        st.download_button(
+                                            label="📥 Download Issues & Opportunities CSV",
+                                            data=csv_data,
+                                            file_name=f"bpmn_issues_opportunities_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                                            mime="text/csv"
+                                        )
+                                    else:
+                                        st.warning("⚠️ No issues or opportunities found in the data")
+                                        return
                                 else:
                                     # Export single CSV
                                     tasks_df = pd.DataFrame(combined_tasks)
@@ -2318,6 +2408,8 @@ def main():
                                     markdown_content = generate_markdown_report(analysis_data, combined_tasks)
                                 elif export_scope == "Tasks Only":
                                     markdown_content = generate_tasks_markdown(combined_tasks)
+                                elif export_scope == "Issues & Opportunities Only":
+                                    markdown_content = generate_issues_opportunities_markdown(combined_tasks)
                                 else:  # Summary Only
                                     markdown_content = generate_summary_markdown(analysis_data, combined_tasks)
                                 
@@ -2337,7 +2429,47 @@ def main():
                                 if export_scope == "Complete Analysis":
                                     json_data = json.dumps(analysis_data, indent=2, default=str)
                                 elif export_scope == "Tasks Only":
-                                    json_data = json.dumps(combined_tasks, indent=2, default=str)
+                                    json_data = json_data = json.dumps(combined_tasks, indent=2, default=str)
+                                elif export_scope == "Issues & Opportunities Only":
+                                    # Export only issues and opportunities data
+                                    issues_opportunities_data = []
+                                    for task in combined_tasks:
+                                        # Add opportunities
+                                        opportunities = task.get('opportunities', '')
+                                        if opportunities and opportunities.strip():
+                                            issues_opportunities_data.append({
+                                                'type': 'Opportunity',
+                                                'task_name': task.get('name', 'Unknown'),
+                                                'department': task.get('swimlane', 'Unknown'),
+                                                'owner': task.get('task_owner', 'Unknown'),
+                                                'content': opportunities,
+                                                'current_cost': task.get('total_cost', 0),
+                                                'current_time_hours': task.get('time_hours', 0),
+                                                'status': task.get('task_status', 'Unknown'),
+                                                'tools_used': task.get('tools_used', 'N/A')
+                                            })
+                                        
+                                        # Add issues
+                                        issues_text = task.get('issues_text', '')
+                                        if issues_text and issues_text.strip():
+                                            issues_opportunities_data.append({
+                                                'type': 'Issue/Risk',
+                                                'task_name': task.get('name', 'Unknown'),
+                                                'department': task.get('swimlane', 'Unknown'),
+                                                'owner': task.get('task_owner', 'Unknown'),
+                                                'content': issues_text,
+                                                'priority': task.get('issues_priority', 'Unknown'),
+                                                'current_cost': task.get('total_cost', 0),
+                                                'current_time_hours': task.get('time_hours', 0),
+                                                'status': task.get('task_status', 'Unknown'),
+                                                'tools_used': task.get('tools_used', 'N/A')
+                                            })
+                                    
+                                    if issues_opportunities_data:
+                                        json_data = json.dumps(issues_opportunities_data, indent=2, default=str)
+                                    else:
+                                        st.warning("⚠️ No issues or opportunities found in the data")
+                                        return
                                 else:  # Summary Only
                                     summary_data = {
                                         'summary': {
@@ -2389,6 +2521,18 @@ def main():
                         
                         if export_format == "Markdown (.md)":
                             st.info("📝 **Markdown Export**: Clean table format with all task details - ideal for task management and review!")
+                        
+                    elif export_scope == "Issues & Opportunities Only":
+                        st.write("**Issues & Opportunities Export includes:**")
+                        st.write("• All captured opportunities and improvement ideas")
+                        st.write("• All identified issues and risks")
+                        st.write("• Task context (name, department, owner)")
+                        st.write("• Current cost and time impact")
+                        st.write("• Priority levels for issues")
+                        st.write("• Status and tools information")
+                        
+                        if export_format == "Markdown (.md)":
+                            st.info("📝 **Markdown Export**: Focused report on improvement areas and risks - perfect for action planning and stakeholder communication!")
                         
                     else:  # Summary Only
                         st.write("**Summary Export includes:**")
@@ -2732,6 +2876,81 @@ def categorize_issue(issue_text):
         return "🏭 Production & Planning Issues"
     else:
         return "⚠️ Other Issues"
+
+def generate_issues_opportunities_markdown(combined_tasks):
+    """Generate a Markdown report focused on issues and opportunities."""
+    
+    markdown = f"""# Issues & Opportunities Report
+*Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+
+## 📋 Report Summary
+- **Total Tasks Analyzed**: {len(combined_tasks)}
+- **Focus**: Issues, Risks, and Improvement Opportunities
+
+## 💡 Opportunities & Improvement Ideas
+
+"""
+    
+    opportunities_found = False
+    for task in combined_tasks:
+        opportunities = task.get('opportunities', '')
+        if opportunities and opportunities.strip():
+            opportunities_found = True
+            markdown += f"### 🚀 {task.get('name', 'Unknown')}\n"
+            markdown += f"**Department**: {task.get('swimlane', 'Unknown')}\n"
+            markdown += f"**Owner**: {task.get('task_owner', 'Unknown')}\n"
+            markdown += f"**Current Cost**: ${task.get('total_cost', 0):.2f}\n"
+            markdown += f"**Current Time**: {task.get('time_hours', 0):.2f} hours\n"
+            markdown += f"**Status**: {task.get('task_status', 'Unknown')}\n"
+            markdown += f"**Tools**: {task.get('tools_used', 'N/A')}\n\n"
+            markdown += f"**Opportunity**: {opportunities}\n\n"
+            markdown += "---\n\n"
+    
+    if not opportunities_found:
+        markdown += "*No opportunities captured in the current data.*\n\n"
+    
+    markdown += "## ⚠️ Issues & Risks Analysis\n\n"
+    
+    issues_found = False
+    for task in combined_tasks:
+        issues_text = task.get('issues_text', '')
+        issues_priority = task.get('issues_priority', '')
+        if issues_text and issues_text.strip():
+            issues_found = True
+            markdown += f"### ⚠️ {task.get('name', 'Unknown')}\n"
+            markdown += f"**Department**: {task.get('swimlane', 'Unknown')}\n"
+            markdown += f"**Owner**: {task.get('task_owner', 'Unknown')}\n"
+            markdown += f"**Priority**: {issues_priority}\n"
+            markdown += f"**Current Cost**: ${task.get('total_cost', 0):.2f}\n"
+            markdown += f"**Current Time**: {task.get('time_hours', 0):.2f} hours\n"
+            markdown += f"**Status**: {task.get('task_status', 'Unknown')}\n"
+            markdown += f"**Tools**: {task.get('tools_used', 'N/A')}\n\n"
+            markdown += f"**Issue/Risk**: {issues_text}\n\n"
+            markdown += "---\n\n"
+    
+    if not issues_found:
+        markdown += "*No issues captured in the current data.*\n\n"
+    
+    # Summary table
+    markdown += "## 📊 Summary Table\n\n"
+    markdown += "| Type | Task Name | Department | Owner | Priority | Current Cost | Current Time |\n"
+    markdown += "|------|-----------|------------|-------|----------|--------------|--------------|\n"
+    
+    for task in combined_tasks:
+        # Add opportunities
+        opportunities = task.get('opportunities', '')
+        if opportunities and opportunities.strip():
+            markdown += f"| 🚀 Opportunity | {task.get('name', 'Unknown')} | {task.get('swimlane', 'Unknown')} | {task.get('task_owner', 'Unknown')} | - | ${task.get('total_cost', 0):.2f} | {task.get('time_hours', 0):.2f}h |\n"
+        
+        # Add issues
+        issues_text = task.get('issues_text', '')
+        if issues_text and issues_text.strip():
+            priority = task.get('issues_priority', 'Unknown')
+            markdown += f"| ⚠️ Issue | {task.get('name', 'Unknown')} | {task.get('swimlane', 'Unknown')} | {task.get('task_owner', 'Unknown')} | {priority} | ${task.get('total_cost', 0):.2f} | {task.get('time_hours', 0):.2f}h |\n"
+    
+    markdown += f"\n---\n*Issues & Opportunities report generated by Inocta BPM Analysis*\n*Total tasks analyzed: {len(combined_tasks)}*\n"
+    
+    return markdown
 
 if __name__ == "__main__":
     main()

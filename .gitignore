@@ -245,3 +245,10 @@ temp/
 example/
 *.bpmn
 *.xml
+
+# Deployment files (keep these for deployment)
+!.streamlit/
+!Procfile
+!runtime.txt
+!setup.py
+!requirements-deploy.txt
