@@ -192,6 +192,7 @@ class BPMNAnalyzer:
                 'swimlane': swimlane_name,
                 'type': task_type.replace('bpmn:', ''),
                 'time_hhmm': time_hhmm,
+                'time_display': self._format_time_display(time_hhmm),  # Formatted for display
                 'time_minutes': time_minutes,
                 'time_hours': time_hours,
                 'cost_per_hour': cost_per_hour,
@@ -227,6 +228,7 @@ class BPMNAnalyzer:
                 'swimlane': swimlane_name,
                 'type': task_type.replace('bpmn:', ''),
                 'time_hhmm': '00:00',
+                'time_display': '00:00',  # Formatted for display
                 'time_minutes': 0,
                 'time_hours': 0,
                 'cost_per_hour': 0,
@@ -257,7 +259,7 @@ class BPMNAnalyzer:
         Convert HH:MM time format to minutes.
         
         Args:
-            time_str: Time string in HH:MM format
+            time_str: Time string in HH:MM format (e.g., "1:30", "2:00") or just hours (e.g., "6", "1", "5")
             
         Returns:
             Time in minutes
@@ -266,13 +268,17 @@ class BPMNAnalyzer:
             if not time_str or time_str == '' or time_str.strip() == '':
                 return 0
             
-            # Handle cases where time might be just a number (minutes)
+            # Handle cases where time might be just a number (assume it's hours)
             if ':' not in time_str:
                 try:
-                    return int(time_str)
+                    # If it's just a number like "6", "1", "5", assume it's hours
+                    # This matches the BPMN file format where some tasks have "6" meaning 6 hours
+                    hours = float(time_str)
+                    return int(hours * 60)
                 except ValueError:
                     return 0
             
+            # Handle HH:MM format
             parts = time_str.split(':')
             if len(parts) == 2:
                 hours = int(parts[0]) if parts[0].strip() else 0
@@ -281,6 +287,39 @@ class BPMNAnalyzer:
             return 0
         except (ValueError, TypeError):
             return 0
+    
+    def _format_time_display(self, time_str: str) -> str:
+        """
+        Format time string for consistent display in HH:MM format.
+        
+        Args:
+            time_str: Time string (e.g., "6", "1:00", "0:30")
+            
+        Returns:
+            Formatted time string in HH:MM format
+        """
+        try:
+            if not time_str or time_str == '' or time_str.strip() == '':
+                return "0:00"
+            
+            # If it's just a number, assume it's hours and format as HH:00
+            if ':' not in time_str:
+                try:
+                    hours = int(float(time_str))
+                    return f"{hours:02d}:00"
+                except ValueError:
+                    return "0:00"
+            
+            # If it's already in HH:MM format, ensure consistent formatting
+            parts = time_str.split(':')
+            if len(parts) == 2:
+                hours = int(parts[0]) if parts[0].strip() else 0
+                minutes = int(parts[1]) if parts[1].strip() else 0
+                return f"{hours:02d}:{minutes:02d}"
+            
+            return "0:00"
+        except (ValueError, TypeError):
+            return "0:00"
     
     def analyze_business_insights(self, parsed_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -302,7 +341,27 @@ class BPMNAnalyzer:
         # Calculate total costs and time
         total_cost = sum(task.get('total_cost', 0) for task in tasks)
         total_time_minutes = sum(task.get('time_minutes', 0) for task in tasks)
-        total_time_hours = total_time_minutes / 60
+        # Use the sum of individual task hours to ensure consistency with table display
+        total_time_hours = sum(task.get('time_hours', 0) for task in tasks)
+        
+        # Debug: Print some task details to verify parsing
+        print(f"DEBUG: Total tasks parsed: {len(tasks)}")
+        print(f"DEBUG: Total cost calculated: ${total_cost:.2f}")
+        print(f"DEBUG: Total time calculated: {total_time_hours:.2f} hours")
+        print(f"DEBUG: Total time from minutes conversion: {total_time_minutes / 60:.2f} hours")
+        print(f"DEBUG: Expected total time from manual analysis: ~119.75 hours")
+        print(f"DEBUG: Expected total cost from manual analysis: ~$21,321.25")
+        print(f"DEBUG: --- First 10 tasks details ---")
+        for i, task in enumerate(tasks[:10]):  # Show first 10 tasks
+            print(f"DEBUG: Task {i+1}: {task.get('name')}")
+            print(f"  - Time HH:MM: '{task.get('time_hhmm')}'")
+            print(f"  - Time Display: '{task.get('time_display')}'")
+            print(f"  - Time minutes: {task.get('time_minutes')} min")
+            print(f"  - Time hours: {task.get('time_hours'):.2f} hrs")
+            print(f"  - Cost per hour: ${task.get('cost_per_hour', 0):.2f}")
+            print(f"  - Total cost: ${task.get('total_cost', 0):.2f}")
+            print(f"  - Currency: {task.get('currency', 'Unknown')}")
+        print(f"DEBUG: --- End task details ---")
         
         # Group by swimlane (department)
         swimlane_analysis = {}
@@ -698,15 +757,35 @@ def main():
     Main Streamlit application for BPMN analysis.
     """
     st.set_page_config(
-        page_title="BPMN Business Analysis Tool",
+        page_title="Inocta BPM Analysis",
         page_icon="📊",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="expanded",
+        menu_items={
+            'Get Help': None,
+            'Report a bug': None,
+            'About': None
+        }
     )
     
 
     
-    st.title("📊 BPMN Business Analysis Tool")
+    st.title("📊 Inocta BPM Analysis")
+    
+    # Custom CSS to fix any display issues
+    st.markdown("""
+    <style>
+    /* Fix any URL display issues */
+    .stApp > header {
+        display: none;
+    }
+    /* Ensure clean display */
+    .main .block-container {
+        padding-top: 1rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.markdown("""
     This tool analyzes BPMN XML files to extract business insights, calculate costs, 
     and provide KPI analysis for process optimization.
@@ -1084,9 +1163,38 @@ def main():
                     
                     # Display filtered data
                     st.dataframe(
-                        filtered_df[['name', 'swimlane', 'task_owner', 'time_hhmm', 'total_cost', 'currency', 'task_status']],
+                        filtered_df[['name', 'swimlane', 'task_owner', 'time_display', 'total_cost', 'currency', 'task_status']],
                         use_container_width=True
                     )
+                    
+                    # Add summary totals row
+                    if not filtered_df.empty:
+                        total_tasks = len(filtered_df)
+                        total_time_hours = filtered_df['time_hours'].sum()
+                        total_cost = filtered_df['total_cost'].sum()
+                        
+                        # Format time display for summary
+                        total_hours_int = int(total_time_hours)
+                        total_minutes = int((total_time_hours - total_hours_int) * 60)
+                        time_display = f"{total_hours_int:02d}:{total_minutes:02d}"
+                        
+                        st.markdown("---")
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            st.metric("Total Tasks", total_tasks)
+                        with col2:
+                            st.metric("Total Time", f"{time_display} ({total_time_hours:.2f} hrs)")
+                        with col3:
+                            st.metric("Total Cost", f"${total_cost:,.2f}")
+                        with col4:
+                            st.metric("Avg Cost/Task", f"${total_cost/total_tasks:,.2f}" if total_tasks > 0 else "$0.00")
+                        
+                        # Validation message - compare with grand total from combined_tasks
+                        grand_total_time = sum(task.get('time_hours', 0) for task in combined_tasks)
+                        if abs(total_time_hours - grand_total_time) < 0.01:
+                            st.success("✅ Table totals match grand total")
+                        else:
+                            st.warning(f"⚠️ Table total ({total_time_hours:.2f} hrs) differs from grand total ({grand_total_time:.2f} hrs)")
                 
                 with tab3:
                     st.subheader("Swimlane/Department Analysis")
