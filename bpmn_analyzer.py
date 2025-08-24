@@ -2411,7 +2411,7 @@ def main():
                         warning_count = 0
                         info_count = 0
                         
-                        # CRITICAL ISSUES (Red - High Impact)
+                        # CRITICAL ISSUES (Red - High Impact) - Business Critical
                         if not task.get('swimlane') or task.get('swimlane') == 'Unknown':
                             issues.append("🚨 Missing/Invalid Swimlane")
                             critical_count += 1
@@ -2428,7 +2428,7 @@ def main():
                             issues.append("🚨 Missing Cost per Hour")
                             critical_count += 1
                         
-                        # WARNING ISSUES (Orange - Medium Impact)
+                        # WARNING ISSUES (Orange - Medium Impact) - Important for Compliance
                         if not task.get('task_status') or task.get('task_status') == '':
                             issues.append("⚠️ Missing Task Status")
                             warning_count += 1
@@ -2437,11 +2437,19 @@ def main():
                             issues.append("⚠️ Missing Documentation Status")
                             warning_count += 1
                         
+                        # Check documentation URL if status indicates documentation is needed
+                        doc_status = task.get('doc_status', '')
+                        if doc_status and doc_status not in ['Documentation Not Needed', 'Unknown']:
+                            doc_url = task.get('doc_url', '')
+                            if not doc_url or doc_url == '' or doc_url == 'NR':
+                                issues.append("⚠️ Missing Documentation URL")
+                                warning_count += 1
+                        
                         if not task.get('task_description') or task.get('task_description') == '':
                             issues.append("⚠️ Missing Task Description")
                             warning_count += 1
                         
-                        # INFO ISSUES (Blue - Low Impact)
+                        # INFO ISSUES (Blue - Low Impact) - Enhancement Opportunities
                         if not task.get('tools_used') or task.get('tools_used') == '':
                             issues.append("ℹ️ Missing Tools Information")
                             info_count += 1
@@ -2454,8 +2462,24 @@ def main():
                             issues.append("ℹ️ Missing Issues Information")
                             info_count += 1
                         
-                        if not task.get('faq_q1') or task.get('faq_q1') == '':
-                            issues.append("ℹ️ Missing FAQ Knowledge")
+                        # Check FAQ fields - only if any FAQ field exists
+                        faq_fields = ['faq_q1', 'faq_a1', 'faq_q2', 'faq_a2', 'faq_q3', 'faq_a3']
+                        has_any_faq = any(task.get(field, '') for field in faq_fields)
+                        if has_any_faq:
+                            # Check if FAQ pairs are complete
+                            for i in range(1, 4):
+                                q_key = f'faq_q{i}'
+                                a_key = f'faq_a{i}'
+                                question = task.get(q_key, '')
+                                answer = task.get(a_key, '')
+                                if question and not answer:
+                                    issues.append(f"ℹ️ Incomplete FAQ {i} (missing answer)")
+                                    info_count += 1
+                                elif answer and not question:
+                                    issues.append(f"ℹ️ Incomplete FAQ {i} (missing question)")
+                                    info_count += 1
+                        else:
+                            issues.append("ℹ️ No FAQ Knowledge Captured")
                             info_count += 1
                         
                         if not task.get('task_industry') or task.get('task_industry') == '':
@@ -2507,6 +2531,75 @@ def main():
                         with col4:
                             info_issues_count = sum(issue['Info Issues'] for issue in quality_issues)
                             st.metric("Info Issues", info_issues_count, delta=f"+{info_issues_count}")
+                        
+                        # Data Quality Score and Compliance Metrics
+                        st.markdown("---")
+                        st.subheader("📊 Data Quality Score & Compliance")
+                        
+                        # Calculate overall data quality score
+                        total_tasks = len(combined_tasks)
+                        total_possible_fields = total_tasks * 15  # Approximate number of fields per task
+                        total_issues = sum(issue['Total Issues'] for issue in quality_issues)
+                        quality_score = max(0, ((total_possible_fields - total_issues) / total_possible_fields * 100)) if total_possible_fields > 0 else 100
+                        
+                        # Calculate compliance scores by category
+                        critical_compliance = max(0, ((total_tasks - high_priority) / total_tasks * 100)) if total_tasks > 0 else 100
+                        warning_compliance = max(0, ((total_tasks - medium_priority) / total_tasks * 100)) if total_tasks > 0 else 100
+                        info_compliance = max(0, ((total_tasks - low_priority) / total_tasks * 100)) if total_tasks > 0 else 100
+                        
+                        col1, col2, col3, col4 = st.columns(4)
+                        
+                        with col1:
+                            if quality_score >= 90:
+                                st.success(f"🎯 Overall Quality Score: {quality_score:.1f}%")
+                            elif quality_score >= 75:
+                                st.warning(f"📊 Overall Quality Score: {quality_score:.1f}%")
+                            else:
+                                st.error(f"📉 Overall Quality Score: {quality_score:.1f}%")
+                        
+                        with col2:
+                            if critical_compliance >= 95:
+                                st.success(f"🚨 Critical Compliance: {critical_compliance:.1f}%")
+                            elif critical_compliance >= 80:
+                                st.warning(f"⚠️ Critical Compliance: {critical_compliance:.1f}%")
+                            else:
+                                st.error(f"❌ Critical Compliance: {critical_compliance:.1f}%")
+                        
+                        with col3:
+                            if warning_compliance >= 80:
+                                st.success(f"⚠️ Warning Compliance: {warning_compliance:.1f}%")
+                            elif warning_compliance >= 60:
+                                st.warning(f"📊 Warning Compliance: {warning_compliance:.1f}%")
+                            else:
+                                st.error(f"📉 Warning Compliance: {warning_compliance:.1f}%")
+                        
+                        with col4:
+                            if info_compliance >= 70:
+                                st.success(f"ℹ️ Info Compliance: {info_compliance:.1f}%")
+                            elif info_compliance >= 50:
+                                st.warning(f"📊 Info Compliance: {info_compliance:.1f}%")
+                            else:
+                                st.error(f"📉 Info Compliance: {info_compliance:.1f}%")
+                        
+                        # Quality improvement recommendations
+                        st.markdown("---")
+                        st.subheader("💡 Quality Improvement Recommendations")
+                        
+                        recommendations = []
+                        if critical_compliance < 95:
+                            recommendations.append("🚨 **Immediate Action Required**: Address critical issues to ensure business continuity")
+                        if warning_compliance < 80:
+                            recommendations.append("⚠️ **Compliance Focus**: Improve documentation and status tracking for regulatory compliance")
+                        if info_compliance < 70:
+                            recommendations.append("ℹ️ **Knowledge Enhancement**: Capture more opportunities, issues, and FAQ knowledge")
+                        if quality_score < 90:
+                            recommendations.append("📊 **Overall Improvement**: Focus on data completeness across all fields")
+                        
+                        if recommendations:
+                            for rec in recommendations:
+                                st.info(rec)
+                        else:
+                            st.success("🎉 **Excellent Data Quality**: All compliance thresholds met!")
                         
                         # Priority-based filtering
                         st.subheader("🔍 Filter by Priority")
@@ -2581,6 +2674,75 @@ def main():
                                     color_discrete_sequence=['lightblue', 'lightcyan', 'lightsteelblue']
                                 )
                                 st.plotly_chart(fig2, use_container_width=True)
+                        
+                        # Field-by-field quality breakdown
+                        st.subheader("🔍 Field-by-Field Quality Analysis")
+                        
+                        # Count issues by field type
+                        field_issues = {
+                            'Swimlane': 0,
+                            'Task Owner': 0,
+                            'Time Estimate': 0,
+                            'Cost per Hour': 0,
+                            'Task Status': 0,
+                            'Documentation Status': 0,
+                            'Documentation URL': 0,
+                            'Task Description': 0,
+                            'Tools Used': 0,
+                            'Opportunities': 0,
+                            'Issues Text': 0,
+                            'FAQ Knowledge': 0,
+                            'Industry Context': 0
+                        }
+                        
+                        for issue in quality_issues:
+                            issues_text = issue['Issues']
+                            if '🚨 Missing/Invalid Swimlane' in issues_text:
+                                field_issues['Swimlane'] += 1
+                            if '🚨 Missing Task Owner' in issues_text:
+                                field_issues['Task Owner'] += 1
+                            if '🚨 Missing Time Estimate' in issues_text:
+                                field_issues['Time Estimate'] += 1
+                            if '🚨 Missing Cost per Hour' in issues_text:
+                                field_issues['Cost per Hour'] += 1
+                            if '⚠️ Missing Task Status' in issues_text:
+                                field_issues['Task Status'] += 1
+                            if '⚠️ Missing Documentation Status' in issues_text:
+                                field_issues['Documentation Status'] += 1
+                            if '⚠️ Missing Documentation URL' in issues_text:
+                                field_issues['Documentation URL'] += 1
+                            if '⚠️ Missing Task Description' in issues_text:
+                                field_issues['Task Description'] += 1
+                            if 'ℹ️ Missing Tools Information' in issues_text:
+                                field_issues['Tools Used'] += 1
+                            if 'ℹ️ Missing Opportunities' in issues_text:
+                                field_issues['Opportunities'] += 1
+                            if 'ℹ️ Missing Issues Information' in issues_text:
+                                field_issues['Issues Text'] += 1
+                            if 'ℹ️ No FAQ Knowledge Captured' in issues_text or 'ℹ️ Incomplete FAQ' in issues_text:
+                                field_issues['FAQ Knowledge'] += 1
+                            if 'ℹ️ Missing Industry Context' in issues_text:
+                                field_issues['Industry Context'] += 1
+                        
+                        # Create field quality chart
+                        field_df = pd.DataFrame(list(field_issues.items()), columns=['Field', 'Issue Count'])
+                        field_df = field_df[field_df['Issue Count'] > 0].sort_values('Issue Count', ascending=False)
+                        
+                        if not field_df.empty:
+                            fig_field = px.bar(
+                                field_df,
+                                x='Field',
+                                y='Issue Count',
+                                title='Quality Issues by Field Type',
+                                color='Issue Count',
+                                color_continuous_scale='RdYlGn_r'
+                            )
+                            fig_field.update_layout(xaxis_tickangle=-45)
+                            st.plotly_chart(fig_field, use_container_width=True)
+                            
+                            # Show field quality table
+                            st.write("**Field Quality Breakdown:**")
+                            st.dataframe(field_df, use_container_width=True)
                         
                         # Issues by swimlane with priority breakdown
                         st.subheader("Quality Issues by Department")
