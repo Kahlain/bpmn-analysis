@@ -1449,13 +1449,20 @@ def main():
                         "Documentation Not Needed": "#FFFFFF",  # White
                         "Documented": "#28A745",               # Green
                         "In Process to be Documented": "#007BFF", # Blue
-                        "Not Documented": "#FFC107"            # Yellow
+                        "Not Documented": "#FFC107",           # Yellow
+                        "Unknown": "#6C757D"                   # Gray for unknown statuses
                     }
                     
                     # Group by documentation status
                     doc_status_analysis = {}
                     for task in combined_tasks:
-                        doc_status = task.get('doc_status', 'Unknown')
+                        # Handle empty, null, or whitespace-only doc_status values
+                        doc_status = task.get('doc_status', '')
+                        if not doc_status or doc_status.strip() == '' or doc_status == 'None':
+                            doc_status = 'Unknown'
+                        else:
+                            doc_status = doc_status.strip()
+                        
                         if doc_status not in doc_status_analysis:
                             doc_status_analysis[doc_status] = {
                                 'task_count': 0,
@@ -1519,11 +1526,47 @@ def main():
                         )
                     
                     with col4:
+                        total_unknown = doc_status_analysis.get('Unknown', {}).get('task_count', 0)
+                        st.metric(
+                            "❓ Unknown Status", 
+                            f"{total_unknown}/{total_tasks}",
+                            f"{total_unknown/total_tasks*100:.1f}%" if total_tasks > 0 else "0%"
+                        )
+                    
+                    # Add a second row for additional metrics
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
                         total_with_urls = sum(status_data.get('tasks_with_urls', 0) for status_data in doc_status_analysis.values())
                         st.metric(
                             "🔗 With URLs", 
                             f"{total_with_urls}/{total_tasks}",
                             f"{total_with_urls/total_tasks*100:.1f}%" if total_tasks > 0 else "0%"
+                        )
+                    
+                    with col2:
+                        total_without_urls = sum(status_data.get('tasks_without_urls', 0) for status_data in doc_status_analysis.values())
+                        st.metric(
+                            "🔗 Without URLs", 
+                            f"{total_without_urls}/{total_tasks}",
+                            f"{total_without_urls/total_tasks*100:.1f}%" if total_tasks > 0 else "0%"
+                        )
+                    
+                    with col3:
+                        total_needing_docs = (doc_status_analysis.get('Not Documented', {}).get('task_count', 0) + 
+                                            doc_status_analysis.get('Unknown', {}).get('task_count', 0))
+                        st.metric(
+                            "📝 Needs Documentation", 
+                            f"{total_needing_docs}/{total_tasks}",
+                            f"{total_needing_docs/total_tasks*100:.1f}%" if total_tasks > 0 else "0%"
+                        )
+                    
+                    with col4:
+                        total_in_process = doc_status_analysis.get('In Process to be Documented', {}).get('task_count', 0)
+                        st.metric(
+                            "🔄 In Process", 
+                            f"{total_in_process}/{total_tasks}",
+                            f"{total_in_process/total_tasks*100:.1f}%" if total_tasks > 0 else "0%"
                         )
                     
                     st.markdown("---")
@@ -1539,6 +1582,56 @@ def main():
                     
                     styled_df = doc_status_df.style.applymap(color_status, subset=['Documentation Status'])
                     st.dataframe(styled_df, use_container_width=True)
+                    
+                    # Flag tasks with unknown documentation status
+                    if 'Unknown' in doc_status_analysis:
+                        st.markdown("---")
+                        st.warning("⚠️ **Tasks with Unknown Documentation Status**")
+                        st.write("The following tasks have missing or invalid documentation status values:")
+                        
+                        # Get tasks with unknown status
+                        unknown_tasks = [task for task in combined_tasks 
+                                       if not task.get('doc_status') or 
+                                       task.get('doc_status', '').strip() == '' or 
+                                       task.get('doc_status') == 'None']
+                        
+                        if unknown_tasks:
+                            unknown_df = pd.DataFrame(unknown_tasks)
+                            display_columns = ['name', 'swimlane', 'task_owner', 'doc_status', 'doc_url', 'time_display', 'total_cost']
+                            available_columns = [col for col in display_columns if col in unknown_df.columns]
+                            
+                            st.dataframe(
+                                unknown_df[available_columns],
+                                use_container_width=True,
+                                column_config={
+                                    "doc_status": st.column_config.TextColumn(
+                                        "Current Status",
+                                        help="Current documentation status (empty/None)",
+                                        max_chars=30
+                                    ),
+                                    "doc_url": st.column_config.LinkColumn(
+                                        "Documentation URL",
+                                        help="Click to open documentation link",
+                                        max_chars=50
+                                    )
+                                }
+                            )
+                            
+                            # Summary of unknown status tasks
+                            total_unknown_cost = sum(task.get('total_cost', 0) for task in unknown_tasks)
+                            total_unknown_time = sum(task.get('time_hours', 0) for task in unknown_tasks)
+                            
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                st.metric("Tasks with Unknown Status", len(unknown_tasks))
+                            with col2:
+                                st.metric("Total Cost at Risk", f"${total_unknown_cost:,.2f}")
+                            with col3:
+                                st.metric("Total Time at Risk", f"{total_unknown_time:.1f} hrs")
+                            
+                            st.info("💡 **Recommendation**: Update these tasks in your BPMN files with proper documentation status values from your schema.")
+                        else:
+                            st.success("✅ No tasks with unknown documentation status found!")
                     
                     # Create two columns for charts
                     col1, col2 = st.columns(2)
