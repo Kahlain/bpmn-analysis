@@ -1205,9 +1205,14 @@ def main():
                     
                     # Display filtered data with formatted columns
                     st.dataframe(
-                        display_df[['name', 'swimlane', 'task_owner', 'time_display', 'total_cost', 'currency', 'task_status', 'doc_status_display', 'doc_url_display']],
+                        display_df[['name', 'task_description', 'swimlane', 'task_owner', 'time_display', 'total_cost', 'currency', 'task_status', 'doc_status_display', 'doc_url_display']],
                         use_container_width=True,
                         column_config={
+                            "task_description": st.column_config.TextColumn(
+                                "Task Description",
+                                help="Description of what the task involves",
+                                max_chars=60
+                            ),
                             "doc_status_display": st.column_config.TextColumn(
                                 "Documentation Status",
                                 help="Current status of task documentation",
