@@ -868,7 +868,7 @@ def main():
                     "📋 Tasks Overview", 
                     "🏭 Swimlane Analysis", 
                     "👥 Owner Analysis", 
-                    "📊 Status & Priority", 
+                    "📊 Status Analysis", 
                     "📚 Documentation Status", 
                     "🔧 Tools Analysis", 
                     "💡 Opportunities", 
@@ -1353,67 +1353,93 @@ def main():
                     st.plotly_chart(fig, use_container_width=True)
                 
                 with tab5:
-                    st.subheader("Status & Priority Analysis")
+                    st.subheader("📊 Status Analysis")
                     
+                    # Status analysis
+                    status_analysis = {}
+                    for task in combined_tasks:
+                        status = task.get('task_status', 'Unknown')
+                        if status not in status_analysis:
+                            status_analysis[status] = {
+                                'task_count': 0,
+                                'total_cost': 0
+                            }
+                        
+                        status_analysis[status]['task_count'] += 1
+                        status_analysis[status]['total_cost'] += task.get('total_cost', 0)
+                    
+                    status_df = pd.DataFrame(status_analysis).T.reset_index()
+                    status_df.columns = ['Status', 'Task Count', 'Total Cost']
+                    
+                    # Display status summary
+                    st.write("**Task Status Summary**")
+                    st.dataframe(status_df, use_container_width=True)
+                    
+                    # Create two columns for charts
                     col1, col2 = st.columns(2)
                     
                     with col1:
-                        # Status analysis
-                        status_analysis = {}
-                        for task in combined_tasks:
-                            status = task.get('task_status', 'Unknown')
-                            if status not in status_analysis:
-                                status_analysis[status] = {
-                                    'task_count': 0,
-                                    'total_cost': 0
-                                }
-                            
-                            status_analysis[status]['task_count'] += 1
-                            status_analysis[status]['total_cost'] += task.get('total_cost', 0)
-                        
-                        status_df = pd.DataFrame(status_analysis).T.reset_index()
-                        status_df.columns = ['Status', 'Task Count', 'Total Cost']
-                        
-                        st.write("**Task Status Analysis**")
-                        st.dataframe(status_df, use_container_width=True)
-                        
-                        # Status chart
+                        # Bar chart for task status
                         fig = px.bar(
                             status_df,
                             x='Status',
                             y='Task Count',
-                            title='Tasks by Status'
+                            title='Tasks by Status',
+                            color='Task Count',
+                            color_continuous_scale='viridis'
                         )
                         st.plotly_chart(fig, use_container_width=True)
                     
                     with col2:
-                        # Priority analysis
-                        priority_analysis = {}
-                        for task in combined_tasks:
-                            priority = task.get('issues_priority', 'Unknown')
-                            if priority not in priority_analysis:
-                                priority_analysis[priority] = {
-                                    'task_count': 0,
-                                    'total_cost': 0
-                                }
-                            
-                            priority_analysis[priority]['task_count'] += 1
-                            priority_analysis[priority]['total_cost'] += task.get('total_cost', 0)
-                        
-                        priority_df = pd.DataFrame(priority_analysis).T.reset_index()
-                        priority_df.columns = ['Priority', 'Task Count', 'Total Cost']
-                        
-                        st.write("**Issues Priority Analysis**")
-                        st.dataframe(priority_df, use_container_width=True)
-                        
-                        # Priority chart
+                        # Pie chart for task status
                         fig = px.pie(
-                            priority_df,
+                            status_df,
                             values='Task Count',
-                            names='Priority',
-                            title='Tasks by Issue Priority'
+                            names='Status',
+                            title='Task Status Distribution',
+                            color_discrete_sequence=px.colors.qualitative.Set3
                         )
+                        fig.update_traces(textposition='inside', textinfo='percent+label')
                         st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Tasks requiring attention table
+                    st.markdown("---")
+                    st.write("**⚠️ Tasks Requiring Attention**")
+                    
+                    # Filter tasks that require attention
+                    attention_tasks = [task for task in combined_tasks if task.get('task_status', '').lower() in ['requires attention', 'pending', 'blocked', 'issue']]
+                    
+                    if attention_tasks:
+                        attention_df = pd.DataFrame(attention_tasks)
+                        # Select relevant columns for display
+                        display_columns = ['name', 'swimlane', 'task_owner', 'time_display', 'total_cost', 'currency', 'task_status']
+                        available_columns = [col for col in display_columns if col in attention_df.columns]
+                        
+                        st.dataframe(
+                            attention_df[available_columns],
+                            use_container_width=True,
+                            column_config={
+                                "task_status": st.column_config.TextColumn(
+                                    "Status",
+                                    help="Current status of the task",
+                                    max_chars=20
+                                )
+                            }
+                        )
+                        
+                        # Summary of attention tasks
+                        total_attention_cost = sum(task.get('total_cost', 0) for task in attention_tasks)
+                        total_attention_time = sum(task.get('time_hours', 0) for task in attention_tasks)
+                        
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Tasks Requiring Attention", len(attention_tasks))
+                        with col2:
+                            st.metric("Total Cost at Risk", f"${total_attention_cost:,.2f}")
+                        with col3:
+                            st.metric("Total Time at Risk", f"{total_attention_time:.1f} hrs")
+                    else:
+                        st.success("🎉 All tasks are in good status! No tasks require attention.")
                 
                 with tab6:
                     st.subheader("Documentation Status Analysis")

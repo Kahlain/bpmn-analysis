@@ -10,7 +10,7 @@ A powerful, interactive web application for analyzing BPMN (Business Process Mod
 - **Process Cost Analysis**: Calculate total costs, time estimates, and resource allocation
 - **Swimlane/Department Analysis**: Track workload distribution across organizational units
 - **Task Owner Insights**: Analyze individual contributor workload and performance
-- **Status & Priority Tracking**: Monitor task completion status and issue priorities
+- **Status Analysis**: Monitor task completion status with visual charts and attention task tracking
 - **Documentation Compliance**: Track documentation status across all processes
 
 ### 🔧 **Advanced Analytics**
@@ -190,7 +190,7 @@ Your BPMN files should include **Camunda Properties** with the following metadat
 - **📋 Tasks Overview**: Detailed task filtering and display with documentation status and URLs
 - **🏭 Swimlane Analysis**: Department-based analysis
 - **👥 Owner Analysis**: Task owner insights
-- **📊 Status & Priority**: Task status tracking
+- **📊 Status Analysis**: Task status tracking with attention tasks
 - **📚 Documentation Status**: Documentation compliance
 - **🔧 Tools Analysis**: Tool usage patterns
 - **💡 Opportunities**: Improvement opportunities
