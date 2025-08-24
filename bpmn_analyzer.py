@@ -1734,8 +1734,10 @@ def main():
                 with tab7:
                     st.subheader("Tools Analysis")
                     
-                    # Group by tools used
+                    # Group by tools used with enhanced cleanup
                     tools_analysis = {}
+                    tool_to_tasks = {}  # Track which tasks use each tool
+                    
                     for task in combined_tasks:
                         tools = task.get('tools_used', '')
                         if tools and tools.strip():
@@ -1748,7 +1750,7 @@ def main():
                                 # Split by comma if no semicolon
                                 tool_list = [tool.strip() for tool in tools.split(',') if tool.strip()]
                             
-                            # Clean and normalize tool names
+                            # Clean and normalize tool names with better deduplication
                             cleaned_tools = []
                             for tool in tool_list:
                                 # Remove common prefixes/suffixes and normalize
@@ -1759,7 +1761,30 @@ def main():
                                         sub_tools = [t.strip() for t in cleaned_tool.split(' et ')]
                                         cleaned_tools.extend(sub_tools)
                                     else:
+                                        # Additional cleanup for common mistakes
+                                        cleaned_tool = cleaned_tool.replace('  ', ' ')  # Remove double spaces
+                                        cleaned_tool = cleaned_tool.replace('Microsoft ', '')  # Remove Microsoft prefix
+                                        cleaned_tool = cleaned_tool.replace('MS ', '')  # Remove MS prefix
+                                        cleaned_tool = cleaned_tool.replace('Office ', '')  # Remove Office prefix
+                                        
+                                        # Handle common variations
+                                        if cleaned_tool.lower() in ['teams', 'microsoft teams', 'ms teams']:
+                                            cleaned_tool = 'Teams'
+                                        elif cleaned_tool.lower() in ['excel', 'microsoft excel', 'ms excel']:
+                                            cleaned_tool = 'Excel'
+                                        elif cleaned_tool.lower() in ['outlook', 'microsoft outlook', 'ms outlook']:
+                                            cleaned_tool = 'Outlook'
+                                        elif cleaned_tool.lower() in ['word', 'microsoft word', 'ms word']:
+                                            cleaned_tool = 'Word'
+                                        elif cleaned_tool.lower() in ['powerpoint', 'microsoft powerpoint', 'ms powerpoint']:
+                                            cleaned_tool = 'PowerPoint'
+                                        elif cleaned_tool.lower() in ['planner', 'microsoft planner', 'ms planner']:
+                                            cleaned_tool = 'Planner'
+                                        
                                         cleaned_tools.append(cleaned_tool)
+                            
+                            # Remove duplicates from cleaned tools
+                            cleaned_tools = list(dict.fromkeys(cleaned_tools))  # Preserve order while removing duplicates
                             
                             # Analyze each individual tool
                             for tool in cleaned_tools:
@@ -1770,7 +1795,8 @@ def main():
                                         'total_time_minutes': 0,
                                         'swimlanes': set(),
                                         'owners': set(),
-                                        'original_combinations': set()  # Track original tool combinations
+                                        'original_combinations': set(),  # Track original tool combinations
+                                        'task_names': []  # Track task names for this tool
                                     }
                                 
                                 tools_analysis[tool]['task_count'] += 1
@@ -1779,6 +1805,20 @@ def main():
                                 tools_analysis[tool]['swimlanes'].add(task.get('swimlane', 'Unknown'))
                                 tools_analysis[tool]['owners'].add(task.get('task_owner', 'Unknown'))
                                 tools_analysis[tool]['original_combinations'].add(tools)  # Keep original combination
+                                tools_analysis[tool]['task_names'].append(task.get('name', 'Unknown Task'))
+                                
+                                # Track tool to tasks mapping
+                                if tool not in tool_to_tasks:
+                                    tool_to_tasks[tool] = []
+                                tool_to_tasks[tool].append({
+                                    'task_name': task.get('name', 'Unknown Task'),
+                                    'swimlane': task.get('swimlane', 'Unknown'),
+                                    'task_owner': task.get('task_owner', 'Unknown'),
+                                    'time_display': task.get('time_display', '00:00'),
+                                    'total_cost': task.get('total_cost', 0),
+                                    'currency': task.get('currency', 'Unknown'),
+                                    'original_tools': tools  # Keep original tools field for reference
+                                })
                     
                     if tools_analysis:
                         # Convert sets to lists for display
@@ -1789,12 +1829,21 @@ def main():
                         # Create tools analysis dataframe
                         tools_df = pd.DataFrame(tools_analysis).T.reset_index()
                         # Rename columns to match expected structure
-                        tools_df.columns = ['Tool', 'Task Count', 'Total Cost', 'total_time_minutes', 'Swimlanes', 'Owners', 'Original Combinations']
+                        tools_df.columns = ['Tool', 'Task Count', 'Total Cost', 'total_time_minutes', 'Swimlanes', 'Owners', 'Original Combinations', 'Task Names']
                         # Calculate hours from minutes
                         tools_df['Total Time (hrs)'] = tools_df['total_time_minutes'] / 60
                         # Rename the minutes column for display
                         tools_df = tools_df.rename(columns={'total_time_minutes': 'Total Time (min)'})
                         tools_df['Avg Cost per Task'] = tools_df['Total Cost'] / tools_df['Task Count']
+                        
+                        # Clean up the task names for better display (limit to first 3 and show count)
+                        def format_task_names(task_names):
+                            if len(task_names) <= 3:
+                                return ', '.join(task_names)
+                            else:
+                                return f"{', '.join(task_names[:3])}... (+{len(task_names)-3} more)"
+                        
+                        tools_df['Task Names'] = tools_df['Task Names'].apply(format_task_names)
                         
                         # Clean the data to ensure numeric values
                         tools_df = tools_df.fillna(0)
@@ -1805,6 +1854,77 @@ def main():
                         # Display enhanced tools analysis
                         st.subheader("📊 Individual Tools Analysis")
                         st.dataframe(tools_df, use_container_width=True)
+                        
+                        # Add detailed task breakdown for each tool
+                        st.markdown("---")
+                        st.subheader("🔍 Detailed Task Breakdown by Tool")
+                        
+                        # Create expandable sections for each tool
+                        for tool_name, tool_data in tools_analysis.items():
+                            with st.expander(f"📱 {tool_name} - {tool_data['task_count']} tasks"):
+                                # Create detailed dataframe for this tool
+                                tool_tasks_df = pd.DataFrame(tool_data['task_names'], columns=['Task Name'])
+                                
+                                # Add additional columns from tool_to_tasks
+                                if tool_name in tool_to_tasks:
+                                    tool_tasks_df = pd.DataFrame(tool_to_tasks[tool_name])
+                                    # Reorder columns for better display
+                                    display_columns = ['task_name', 'swimlane', 'task_owner', 'time_display', 'total_cost', 'currency', 'original_tools']
+                                    available_columns = [col for col in display_columns if col in tool_tasks_df.columns]
+                                    
+                                    st.dataframe(
+                                        tool_tasks_df[available_columns],
+                                        use_container_width=True,
+                                        column_config={
+                                            "task_name": st.column_config.TextColumn(
+                                                "Task Name",
+                                                help="Name of the task using this tool",
+                                                max_chars=50
+                                            ),
+                                            "original_tools": st.column_config.TextColumn(
+                                                "Original Tools Field",
+                                                help="Original tools field from BPMN (for cleanup reference)",
+                                                max_chars=80
+                                            )
+                                        }
+                                    )
+                                    
+                                    # Show summary metrics for this tool
+                                    col1, col2, col3, col4 = st.columns(4)
+                                    with col1:
+                                        st.metric("Total Tasks", tool_data['task_count'])
+                                    with col2:
+                                        st.metric("Total Cost", f"${tool_data['total_cost']:,.2f}")
+                                    with col3:
+                                        st.metric("Total Time", f"{tool_data['total_time_minutes']/60:.1f} hrs")
+                                    with col4:
+                                        st.metric("Avg Cost/Task", f"${tool_data['total_cost']/tool_data['task_count']:,.2f}")
+                                else:
+                                    st.write("No detailed task information available for this tool.")
+                        
+                        # Show cleanup recommendations
+                        st.markdown("---")
+                        st.subheader("🧹 Tool Cleanup Recommendations")
+                        
+                        # Identify potential cleanup opportunities
+                        cleanup_opportunities = []
+                        for tool_name, tool_data in tools_analysis.items():
+                            original_combinations = list(tool_data['original_combinations'])
+                            if len(original_combinations) > 1:
+                                # Multiple different combinations for the same tool
+                                cleanup_opportunities.append({
+                                    'Tool': tool_name,
+                                    'Current Combinations': len(original_combinations),
+                                    'Examples': ', '.join(original_combinations[:3]) + ('...' if len(original_combinations) > 3 else ''),
+                                    'Recommendation': f"Standardize to '{tool_name}' across all tasks"
+                                })
+                        
+                        if cleanup_opportunities:
+                            cleanup_df = pd.DataFrame(cleanup_opportunities)
+                            st.dataframe(cleanup_df, use_container_width=True)
+                            st.info("💡 **Recommendation**: Standardize tool names in your BPMN files to improve analysis accuracy and reduce duplicates.")
+                        else:
+                            st.success("✅ **Great job!** All tool names are properly standardized.")
                         
                         # Show tool combinations analysis
                         st.subheader("🔗 Tool Combinations Analysis")
