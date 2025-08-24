@@ -2432,9 +2432,12 @@ def main():
                             issues.append("🚨 Missing Time Estimate")
                             critical_count += 1
                         
-                        if not task.get('cost_per_hour') or task.get('cost_per_hour') == 0:
+                        # Check if cost_per_hour is missing (None, empty string) but not 0
+                        cost_per_hour = task.get('cost_per_hour')
+                        if cost_per_hour is None or cost_per_hour == '':
                             issues.append("🚨 Missing Cost per Hour")
                             critical_count += 1
+                        # Note: cost_per_hour == 0 is valid for tasks that don't cost anything
                         
                         # WARNING ISSUES (Orange - Medium Impact) - Important for Compliance
                         if not task.get('task_status') or task.get('task_status') == '':
