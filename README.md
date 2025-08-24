@@ -187,7 +187,7 @@ Your BPMN files should include **Camunda Properties** with the following metadat
 
 ### **2. Navigate Analysis Tabs**
 - **📊 Executive Summary**: High-level KPIs and insights
-- **📋 Tasks Overview**: Detailed task filtering and display
+- **📋 Tasks Overview**: Detailed task filtering and display with documentation status and URLs
 - **🏭 Swimlane Analysis**: Department-based analysis
 - **👥 Owner Analysis**: Task owner insights
 - **📊 Status & Priority**: Task status tracking
@@ -204,6 +204,40 @@ Your BPMN files should include **Camunda Properties** with the following metadat
 - **CSV (.csv)**: Tabular data for further analysis
 - **JSON (.json)**: Structured data for API integration
 - **Markdown (.md)**: Formatted reports for documentation
+
+## 📋 **Enhanced Tasks Overview Table**
+
+The Tasks Overview table now includes comprehensive documentation tracking with the following columns:
+
+### **Core Task Information**
+- **`name`**: Task name and description
+- **`swimlane`**: Department or organizational unit
+- **`task_owner`**: Person responsible for the task
+- **`time_display`**: Estimated time in HH:MM format
+- **`total_cost`**: Total cost calculation
+- **`currency`**: Cost currency (CAD, USD, EUR, etc.)
+- **`task_status`**: Current task completion status
+
+### **Documentation Tracking** ✨ **NEW**
+- **`doc_status`**: Documentation status with visual indicators:
+  - ✅ **Complete**: Documentation is finished
+  - 🔄 **In Progress**: Documentation is being worked on
+  - ⏳ **Pending**: Documentation is waiting to start
+  - 🚫 **Not Started**: Documentation hasn't begun
+  - 📝 **Draft**: Documentation is in draft form
+  - 📋 **Unknown**: Status not specified
+
+- **`doc_url`**: Clickable documentation links:
+  - URLs are truncated in the table for readability
+  - Full clickable links are displayed below the table
+  - Links open in new browser tabs
+
+### **Enhanced Features**
+- **Smart Filtering**: Filter by swimlane, owner, status, and documentation status
+- **Documentation Summary**: Real-time statistics on documentation coverage
+- **Visual Indicators**: Emoji-based status display for quick recognition
+- **Clickable Links**: Direct access to task documentation
+- **Coverage Metrics**: Percentage of tasks with complete documentation
 
 ## 🌟 Key Features Explained
 

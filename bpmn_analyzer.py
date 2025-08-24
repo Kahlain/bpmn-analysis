@@ -1161,11 +1161,63 @@ def main():
                     if status_filter != "All":
                         filtered_df = filtered_df[filtered_df['task_status'] == status_filter]
                     
-                    # Display filtered data
+                    # Create a copy of filtered_df for display formatting
+                    display_df = filtered_df.copy()
+                    
+                    # Format doc_url for better display - show clickable links
+                    def format_doc_url(url):
+                        if pd.isna(url) or url == '' or url == 'Unknown':
+                            return 'No URL'
+                        # Truncate long URLs for display
+                        if len(str(url)) > 50:
+                            return f"{str(url)[:47]}..."
+                        return str(url)
+                    
+                    # Format doc_status for better display with emojis
+                    def format_doc_status(status):
+                        if pd.isna(status) or status == '' or status == 'Unknown':
+                            return '📋 Unknown'
+                        status_lower = str(status).lower()
+                        if 'complete' in status_lower or 'done' in status_lower or 'finished' in status_lower:
+                            return '✅ Complete'
+                        elif 'in progress' in status_lower or 'progress' in status_lower:
+                            return '🔄 In Progress'
+                        elif 'pending' in status_lower or 'waiting' in status_lower:
+                            return '⏳ Pending'
+                        elif 'not started' in status_lower or 'not started' in status_lower:
+                            return '🚫 Not Started'
+                        elif 'draft' in status_lower:
+                            return '📝 Draft'
+                        else:
+                            return f'📋 {status}'
+                    
+                    # Apply formatting to columns
+                    display_df['doc_url_display'] = display_df['doc_url'].apply(format_doc_url)
+                    display_df['doc_status_display'] = display_df['doc_status'].apply(format_doc_status)
+                    
+                    # Display filtered data with formatted columns
                     st.dataframe(
-                        filtered_df[['name', 'swimlane', 'task_owner', 'time_display', 'total_cost', 'currency', 'task_status']],
-                        use_container_width=True
+                        display_df[['name', 'swimlane', 'task_owner', 'time_display', 'total_cost', 'currency', 'task_status', 'doc_status_display', 'doc_url_display']],
+                        use_container_width=True,
+                        column_config={
+                            "doc_status_display": st.column_config.TextColumn(
+                                "Documentation Status",
+                                help="Current status of task documentation",
+                                max_chars=20
+                            ),
+                            "doc_url_display": st.column_config.LinkColumn(
+                                "Documentation URL",
+                                help="Click to open documentation link",
+                                max_chars=50
+                            )
+                        }
                     )
+                    
+                    # Add clickable links below the table for better user experience
+                    st.markdown("**📚 Documentation Links:**")
+                    for idx, row in display_df.iterrows():
+                        if pd.notna(row['doc_url']) and row['doc_url'] != '' and row['doc_url'] != 'Unknown':
+                            st.markdown(f"- **{row['name']}**: [Open Documentation]({row['doc_url']})")
                     
                     # Add summary totals row
                     if not filtered_df.empty:
@@ -1195,6 +1247,32 @@ def main():
                             st.success("✅ Table totals match grand total")
                         else:
                             st.warning(f"⚠️ Table total ({total_time_hours:.2f} hrs) differs from grand total ({grand_total_time:.2f} hrs)")
+                        
+                        # Documentation summary
+                        st.markdown("---")
+                        st.markdown("**📚 Documentation Summary:**")
+                        
+                        # Count documentation statuses
+                        doc_status_counts = display_df['doc_status'].value_counts()
+                        total_tasks_with_docs = len(display_df[display_df['doc_status'] != 'Unknown'])
+                        total_tasks_with_urls = len(display_df[display_df['doc_url'].notna() & (display_df['doc_url'] != '') & (display_df['doc_url'] != 'Unknown')])
+                        
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Tasks with Documentation", f"{total_tasks_with_docs}/{total_tasks}")
+                        with col2:
+                            st.metric("Tasks with URLs", f"{total_tasks_with_urls}/{total_tasks}")
+                        with col3:
+                            completion_rate = (total_tasks_with_docs / total_tasks * 100) if total_tasks > 0 else 0
+                            st.metric("Documentation Coverage", f"{completion_rate:.1f}%")
+                        
+                        # Show documentation status breakdown
+                        if not doc_status_counts.empty:
+                            st.markdown("**Documentation Status Breakdown:**")
+                            for status, count in doc_status_counts.items():
+                                if status != 'Unknown':
+                                    percentage = (count / total_tasks * 100) if total_tasks > 0 else 0
+                                    st.markdown(f"- **{status}**: {count} tasks ({percentage:.1f}%)")
                 
                 with tab3:
                     st.subheader("Swimlane/Department Analysis")
