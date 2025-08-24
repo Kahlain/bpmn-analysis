@@ -2669,7 +2669,7 @@ def main():
                         
                         export_scope = st.selectbox(
                             "Select export scope:",
-                            ["Complete Analysis", "Tasks Only", "Summary Only", "Issues & Opportunities Only"]
+                            ["Complete Analysis", "Tasks Only", "Summary Only", "Issues & Opportunities Only", "FAQ Knowledge Only", "Documentation Status Only", "Tools Analysis Only"]
                         )
                     
                     with col2:
@@ -2737,6 +2737,125 @@ def main():
                                         st.success(f"✅ Issues & Opportunities Excel report generated: {filename}")
                                     else:
                                         st.warning("⚠️ No issues or opportunities found in the data")
+                                        return
+                                
+                                elif export_scope == "FAQ Knowledge Only":
+                                    # Export only FAQ data
+                                    faq_data = []
+                                    for task in combined_tasks:
+                                        # Check for FAQ fields
+                                        faq_fields = ['faq_q1', 'faq_a1', 'faq_q2', 'faq_a2', 'faq_q3', 'faq_a3']
+                                        task_has_faqs = False
+                                        
+                                        for i in range(1, 4):
+                                            q_key = f'faq_q{i}'
+                                            a_key = f'faq_a{i}'
+                                            question = task.get(q_key, '')
+                                            answer = task.get(a_key, '')
+                                            
+                                            if question and question.strip() and answer and answer.strip():
+                                                task_has_faqs = True
+                                                faq_data.append({
+                                                    'Task Name': task.get('name', 'Unknown'),
+                                                    'Department': task.get('swimlane', 'Unknown'),
+                                                    'Owner': task.get('task_owner', 'Unknown'),
+                                                    'FAQ #': i,
+                                                    'Question': question.strip(),
+                                                    'Answer': answer.strip(),
+                                                    'Current Cost': task.get('total_cost', 0),
+                                                    'Current Time (hrs)': task.get('time_hours', 0),
+                                                    'Status': task.get('task_status', 'Unknown'),
+                                                    'Tools Used': task.get('tools_used', 'N/A')
+                                                })
+                                        
+                                        # If no FAQs found, add a placeholder row
+                                        if not task_has_faqs:
+                                            faq_data.append({
+                                                'Task Name': task.get('name', 'Unknown'),
+                                                'Department': task.get('swimlane', 'Unknown'),
+                                                'Owner': task.get('task_owner', 'Unknown'),
+                                                'FAQ #': 'N/A',
+                                                'Question': 'No FAQ captured',
+                                                'Answer': 'No FAQ captured',
+                                                'Current Cost': task.get('total_cost', 0),
+                                                'Current Time (hrs)': task.get('time_hours', 0),
+                                                'Status': task.get('task_status', 'Unknown'),
+                                                'Tools Used': task.get('tools_used', 'N/A')
+                                            })
+                                    
+                                    if faq_data:
+                                        faq_df = pd.DataFrame(faq_data)
+                                        with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+                                            faq_df.to_excel(writer, sheet_name='FAQ_Knowledge', index=False)
+                                        st.success(f"✅ FAQ Knowledge Excel report generated: {filename}")
+                                    else:
+                                        st.warning("⚠️ No FAQ data found in the tasks")
+                                        return
+                                
+                                elif export_scope == "Documentation Status Only":
+                                    # Export only documentation status data
+                                    doc_status_data = []
+                                    for task in combined_tasks:
+                                        doc_status_data.append({
+                                            'Task Name': task.get('name', 'Unknown'),
+                                            'Department': task.get('swimlane', 'Unknown'),
+                                            'Owner': task.get('task_owner', 'Unknown'),
+                                            'Documentation Status': task.get('doc_status', 'Unknown'),
+                                            'Documentation URL': task.get('doc_url', 'N/A'),
+                                            'Current Cost': task.get('total_cost', 0),
+                                            'Current Time (hrs)': task.get('time_hours', 0),
+                                            'Status': task.get('task_status', 'Unknown'),
+                                            'Tools Used': task.get('tools_used', 'N/A')
+                                        })
+                                    
+                                    if doc_status_data:
+                                        doc_df = pd.DataFrame(doc_status_data)
+                                        with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+                                            doc_df.to_excel(writer, sheet_name='Documentation_Status', index=False)
+                                        st.success(f"✅ Documentation Status Excel report generated: {filename}")
+                                    else:
+                                        st.warning("⚠️ No documentation status data found")
+                                        return
+                                
+                                elif export_scope == "Tools Analysis Only":
+                                    # Export only tools analysis data
+                                    tools_data = []
+                                    for task in combined_tasks:
+                                        tools = task.get('tools_used', '')
+                                        if tools and tools.strip():
+                                            # Split tools and add each one
+                                            tool_list = [tool.strip() for tool in tools.split(',') if tool.strip()]
+                                            for tool in tool_list:
+                                                tools_data.append({
+                                                    'Task Name': task.get('name', 'Unknown'),
+                                                    'Department': task.get('swimlane', 'Unknown'),
+                                                    'Owner': task.get('task_owner', 'Unknown'),
+                                                    'Tool Used': tool,
+                                                    'Original Tools Field': tools,
+                                                    'Current Cost': task.get('total_cost', 0),
+                                                    'Current Time (hrs)': task.get('time_hours', 0),
+                                                    'Status': task.get('task_status', 'Unknown')
+                                                })
+                                        else:
+                                            # Task with no tools
+                                            tools_data.append({
+                                                'Task Name': task.get('name', 'Unknown'),
+                                                'Department': task.get('swimlane', 'Unknown'),
+                                                'Owner': task.get('task_owner', 'Unknown'),
+                                                'Tool Used': 'No tools specified',
+                                                'Original Tools Field': 'N/A',
+                                                'Current Cost': task.get('total_cost', 0),
+                                                'Current Time (hrs)': task.get('time_hours', 0),
+                                                'Status': task.get('task_status', 'Unknown')
+                                            })
+                                    
+                                    if tools_data:
+                                        tools_df = pd.DataFrame(tools_data)
+                                        with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+                                            tools_df.to_excel(writer, sheet_name='Tools_Analysis', index=False)
+                                        st.success(f"✅ Tools Analysis Excel report generated: {filename}")
+                                    else:
+                                        st.warning("⚠️ No tools data found in the tasks")
                                         return
                                 else:  # Summary Only
                                     # Export summary metrics
@@ -2852,6 +2971,137 @@ def main():
                                     else:
                                         st.warning("⚠️ No issues or opportunities found in the data")
                                         return
+                                
+                                elif export_scope == "FAQ Knowledge Only":
+                                    # Export only FAQ data
+                                    faq_data = []
+                                    for task in combined_tasks:
+                                        # Check for FAQ fields
+                                        faq_fields = ['faq_q1', 'faq_a1', 'faq_q2', 'faq_a2', 'faq_q3', 'faq_a3']
+                                        task_has_faqs = False
+                                        
+                                        for i in range(1, 4):
+                                            q_key = f'faq_q{i}'
+                                            a_key = f'faq_a{i}'
+                                            question = task.get(q_key, '')
+                                            answer = task.get(a_key, '')
+                                            
+                                            if question and question.strip() and answer and answer.strip():
+                                                task_has_faqs = True
+                                                faq_data.append({
+                                                    'Task Name': task.get('name', 'Unknown'),
+                                                    'Department': task.get('swimlane', 'Unknown'),
+                                                    'Owner': task.get('task_owner', 'Unknown'),
+                                                    'FAQ #': i,
+                                                    'Question': question.strip(),
+                                                    'Answer': answer.strip(),
+                                                    'Current Cost': task.get('total_cost', 0),
+                                                    'Current Time (hrs)': task.get('time_hours', 0),
+                                                    'Status': task.get('task_status', 'Unknown'),
+                                                    'Tools Used': task.get('tools_used', 'N/A')
+                                                })
+                                        
+                                        # If no FAQs found, add a placeholder row
+                                        if not task_has_faqs:
+                                            faq_data.append({
+                                                'Task Name': task.get('name', 'Unknown'),
+                                                'Department': task.get('swimlane', 'Unknown'),
+                                                'Owner': task.get('task_owner', 'Unknown'),
+                                                'FAQ #': 'N/A',
+                                                'Question': 'No FAQ captured',
+                                                'Answer': 'No FAQ captured',
+                                                'Current Cost': task.get('total_cost', 0),
+                                                'Current Time (hrs)': task.get('time_hours', 0),
+                                                'Status': task.get('task_status', 'Unknown'),
+                                                'Tools Used': task.get('tools_used', 'N/A')
+                                            })
+                                    
+                                    if faq_data:
+                                        faq_df = pd.DataFrame(faq_data)
+                                        csv_data = faq_df.to_csv(index=False)
+                                        st.download_button(
+                                            label="📥 Download FAQ Knowledge CSV",
+                                            data=csv_data,
+                                            file_name=f"bpmn_faq_knowledge_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                                            mime="text/csv"
+                                        )
+                                    else:
+                                        st.warning("⚠️ No FAQ data found in the tasks")
+                                        return
+                                
+                                elif export_scope == "Documentation Status Only":
+                                    # Export only documentation status data
+                                    doc_status_data = []
+                                    for task in combined_tasks:
+                                        doc_status_data.append({
+                                            'Task Name': task.get('name', 'Unknown'),
+                                            'Department': task.get('swimlane', 'Unknown'),
+                                            'Owner': task.get('task_owner', 'Unknown'),
+                                            'Documentation Status': task.get('doc_status', 'Unknown'),
+                                            'Documentation URL': task.get('doc_url', 'N/A'),
+                                            'Current Cost': task.get('total_cost', 0),
+                                            'Current Time (hrs)': task.get('time_hours', 0),
+                                            'Status': task.get('task_status', 'Unknown'),
+                                            'Tools Used': task.get('tools_used', 'N/A')
+                                        })
+                                    
+                                    if doc_status_data:
+                                        doc_df = pd.DataFrame(doc_status_data)
+                                        csv_data = doc_df.to_csv(index=False)
+                                        st.download_button(
+                                            label="📥 Download Documentation Status CSV",
+                                            data=csv_data,
+                                            file_name=f"bpmn_documentation_status_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                                            mime="text/csv"
+                                        )
+                                    else:
+                                        st.warning("⚠️ No documentation status data found")
+                                        return
+                                
+                                elif export_scope == "Tools Analysis Only":
+                                    # Export only tools analysis data
+                                    tools_data = []
+                                    for task in combined_tasks:
+                                        tools = task.get('tools_used', '')
+                                        if tools and tools.strip():
+                                            # Split tools and add each one
+                                            tool_list = [tool.strip() for tool in tools.split(',') if tool.strip()]
+                                            for tool in tool_list:
+                                                tools_data.append({
+                                                    'Task Name': task.get('name', 'Unknown'),
+                                                    'Department': task.get('swimlane', 'Unknown'),
+                                                    'Owner': task.get('task_owner', 'Unknown'),
+                                                    'Tool Used': tool,
+                                                    'Original Tools Field': tools,
+                                                    'Current Cost': task.get('total_cost', 0),
+                                                    'Current Time (hrs)': task.get('time_hours', 0),
+                                                    'Status': task.get('task_status', 'Unknown')
+                                                })
+                                        else:
+                                            # Task with no tools
+                                            tools_data.append({
+                                                'Task Name': task.get('name', 'Unknown'),
+                                                'Department': task.get('swimlane', 'Unknown'),
+                                                'Owner': task.get('task_owner', 'Unknown'),
+                                                'Tool Used': 'No tools specified',
+                                                'Original Tools Field': 'N/A',
+                                                'Current Cost': task.get('total_cost', 0),
+                                                'Current Time (hrs)': task.get('time_hours', 0),
+                                                'Status': task.get('task_status', 'Unknown')
+                                            })
+                                    
+                                    if tools_data:
+                                        tools_df = pd.DataFrame(tools_data)
+                                        csv_data = tools_df.to_csv(index=False)
+                                        st.download_button(
+                                            label="📥 Download Tools Analysis CSV",
+                                            data=csv_data,
+                                            file_name=f"bpmn_tools_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                                            mime="text/csv"
+                                        )
+                                    else:
+                                        st.warning("⚠️ No tools data found in the tasks")
+                                        return
                                 else:
                                     # Export single CSV
                                     tasks_df = pd.DataFrame(combined_tasks)
@@ -2875,6 +3125,12 @@ def main():
                                     markdown_content = generate_tasks_markdown(combined_tasks)
                                 elif export_scope == "Issues & Opportunities Only":
                                     markdown_content = generate_issues_opportunities_markdown(combined_tasks)
+                                elif export_scope == "FAQ Knowledge Only":
+                                    markdown_content = generate_faq_markdown(combined_tasks)
+                                elif export_scope == "Documentation Status Only":
+                                    markdown_content = generate_documentation_status_markdown(combined_tasks)
+                                elif export_scope == "Tools Analysis Only":
+                                    markdown_content = generate_tools_analysis_markdown(combined_tasks)
                                 else:  # Summary Only
                                     markdown_content = generate_summary_markdown(analysis_data, combined_tasks)
                                 
@@ -2934,6 +3190,121 @@ def main():
                                         json_data = json.dumps(issues_opportunities_data, indent=2, default=str)
                                     else:
                                         st.warning("⚠️ No issues or opportunities found in the data")
+                                        return
+                                
+                                elif export_scope == "FAQ Knowledge Only":
+                                    # Export only FAQ data
+                                    faq_data = []
+                                    for task in combined_tasks:
+                                        # Check for FAQ fields
+                                        faq_fields = ['faq_q1', 'faq_a1', 'faq_q2', 'faq_a2', 'faq_q3', 'faq_a3']
+                                        task_has_faqs = False
+                                        
+                                        for i in range(1, 4):
+                                            q_key = f'faq_q{i}'
+                                            a_key = f'faq_a{i}'
+                                            question = task.get(q_key, '')
+                                            answer = task.get(a_key, '')
+                                            
+                                            if question and question.strip() and answer and answer.strip():
+                                                task_has_faqs = True
+                                                faq_data.append({
+                                                    'type': 'FAQ',
+                                                    'task_name': task.get('name', 'Unknown'),
+                                                    'department': task.get('swimlane', 'Unknown'),
+                                                    'owner': task.get('task_owner', 'Unknown'),
+                                                    'faq_number': i,
+                                                    'question': question.strip(),
+                                                    'answer': answer.strip(),
+                                                    'current_cost': task.get('total_cost', 0),
+                                                    'current_time_hours': task.get('time_hours', 0),
+                                                    'status': task.get('task_status', 'Unknown'),
+                                                    'tools_used': task.get('tools_used', 'N/A')
+                                                })
+                                        
+                                        # If no FAQs found, add a placeholder row
+                                        if not task_has_faqs:
+                                            faq_data.append({
+                                                'type': 'FAQ',
+                                                'task_name': task.get('name', 'Unknown'),
+                                                'department': task.get('swimlane', 'Unknown'),
+                                                'owner': task.get('task_owner', 'Unknown'),
+                                                'faq_number': 'N/A',
+                                                'question': 'No FAQ captured',
+                                                'answer': 'No FAQ captured',
+                                                'current_cost': task.get('total_cost', 0),
+                                                'current_time_hours': task.get('time_hours', 0),
+                                                'status': task.get('task_status', 'Unknown'),
+                                                'tools_used': task.get('tools_used', 'N/A')
+                                            })
+                                    
+                                    if faq_data:
+                                        json_data = json.dumps(faq_data, indent=2, default=str)
+                                    else:
+                                        st.warning("⚠️ No FAQ data found in the tasks")
+                                        return
+                                
+                                elif export_scope == "Documentation Status Only":
+                                    # Export only documentation status data
+                                    doc_status_data = []
+                                    for task in combined_tasks:
+                                        doc_status_data.append({
+                                            'type': 'Documentation',
+                                            'task_name': task.get('name', 'Unknown'),
+                                            'department': task.get('swimlane', 'Unknown'),
+                                            'owner': task.get('task_owner', 'Unknown'),
+                                            'documentation_status': task.get('doc_status', 'Unknown'),
+                                            'documentation_url': task.get('doc_url', 'N/A'),
+                                            'current_cost': task.get('total_cost', 0),
+                                            'current_time_hours': task.get('time_hours', 0),
+                                            'status': task.get('task_status', 'Unknown'),
+                                            'tools_used': task.get('tools_used', 'N/A')
+                                        })
+                                    
+                                    if doc_status_data:
+                                        json_data = json.dumps(doc_status_data, indent=2, default=str)
+                                    else:
+                                        st.warning("⚠️ No documentation status data found")
+                                        return
+                                
+                                elif export_scope == "Tools Analysis Only":
+                                    # Export only tools analysis data
+                                    tools_data = []
+                                    for task in combined_tasks:
+                                        tools = task.get('tools_used', '')
+                                        if tools and tools.strip():
+                                            # Split tools and add each one
+                                            tool_list = [tool.strip() for tool in tools.split(',') if tool.strip()]
+                                            for tool in tool_list:
+                                                tools_data.append({
+                                                    'type': 'Tool',
+                                                    'task_name': task.get('name', 'Unknown'),
+                                                    'department': task.get('swimlane', 'Unknown'),
+                                                    'owner': task.get('task_owner', 'Unknown'),
+                                                    'tool_used': tool,
+                                                    'original_tools_field': tools,
+                                                    'current_cost': task.get('total_cost', 0),
+                                                    'current_time_hours': task.get('time_hours', 0),
+                                                    'status': task.get('task_status', 'Unknown')
+                                                })
+                                        else:
+                                            # Task with no tools
+                                            tools_data.append({
+                                                'type': 'Tool',
+                                                'task_name': task.get('name', 'Unknown'),
+                                                'department': task.get('swimlane', 'Unknown'),
+                                                'owner': task.get('task_owner', 'Unknown'),
+                                                'tool_used': 'No tools specified',
+                                                'original_tools_field': 'N/A',
+                                                'current_cost': task.get('total_cost', 0),
+                                                'current_time_hours': task.get('time_hours', 0),
+                                                'status': task.get('task_status', 'Unknown')
+                                            })
+                                    
+                                    if tools_data:
+                                        json_data = json.dumps(tools_data, indent=2, default=str)
+                                    else:
+                                        st.warning("⚠️ No tools data found in the tasks")
                                         return
                                 else:  # Summary Only
                                     summary_data = {
@@ -2998,7 +3369,43 @@ def main():
                         
                         if export_format == "Markdown (.md)":
                             st.info("📝 **Markdown Export**: Focused report on improvement areas and risks - perfect for action planning and stakeholder communication!")
+                    
+                    elif export_scope == "FAQ Knowledge Only":
+                        st.write("**FAQ Knowledge Export includes:**")
+                        st.write("• All captured FAQ questions and answers")
+                        st.write("• Task context (name, department, owner)")
+                        st.write("• FAQ numbering and organization")
+                        st.write("• Current cost and time impact")
+                        st.write("• Status and tools information")
+                        st.write("• Placeholder rows for tasks without FAQs")
                         
+                        if export_format == "Markdown (.md)":
+                            st.info("📝 **Markdown Export**: Knowledge base format with Q&A pairs - perfect for training and documentation!")
+                    
+                    elif export_scope == "Documentation Status Only":
+                        st.write("**Documentation Status Export includes:**")
+                        st.write("• Documentation status for all tasks")
+                        st.write("• Documentation URLs and links")
+                        st.write("• Task context (name, department, owner)")
+                        st.write("• Current cost and time impact")
+                        st.write("• Status and tools information")
+                        st.write("• Complete documentation audit trail")
+                        
+                        if export_format == "Markdown (.md)":
+                            st.info("📝 **Markdown Export**: Documentation compliance report - perfect for governance and audit purposes!")
+                    
+                    elif export_scope == "Tools Analysis Only":
+                        st.write("**Tools Analysis Export includes:**")
+                        st.write("• Individual tools used across all tasks")
+                        st.write("• Original tools field for cleanup reference")
+                        st.write("• Task context (name, department, owner)")
+                        st.write("• Current cost and time impact")
+                        st.write("• Status information")
+                        st.write("• Tools standardization opportunities")
+                        
+                        if export_format == "Markdown (.md)":
+                            st.info("📝 **Markdown Export**: Tools usage analysis - perfect for IT planning and tool standardization!")
+                    
                     else:  # Summary Only
                         st.write("**Summary Export includes:**")
                         st.write("• Key performance indicators")
@@ -3414,6 +3821,170 @@ def generate_issues_opportunities_markdown(combined_tasks):
             markdown += f"| ⚠️ Issue | {task.get('name', 'Unknown')} | {task.get('swimlane', 'Unknown')} | {task.get('task_owner', 'Unknown')} | {priority} | ${task.get('total_cost', 0):.2f} | {task.get('time_hours', 0):.2f}h |\n"
     
     markdown += f"\n---\n*Issues & Opportunities report generated by Inocta BPM Analysis*\n*Total tasks analyzed: {len(combined_tasks)}*\n"
+    
+    return markdown
+
+def generate_faq_markdown(combined_tasks):
+    """Generate a Markdown report focused on FAQ knowledge capture."""
+    
+    markdown = f"""# FAQ Knowledge Report
+*Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+
+## 📋 Report Summary
+- **Total Tasks Analyzed**: {len(combined_tasks)}
+- **Focus**: Frequently Asked Questions and Knowledge Capture
+
+## ❓ FAQ Knowledge Base
+
+"""
+    
+    faqs_found = False
+    for task in combined_tasks:
+        task_has_faqs = False
+        
+        for i in range(1, 4):
+            q_key = f'faq_q{i}'
+            a_key = f'faq_a{i}'
+            question = task.get(q_key, '')
+            answer = task.get(a_key, '')
+            
+            if question and question.strip() and answer and answer.strip():
+                if not task_has_faqs:
+                    markdown += f"### 📝 {task.get('name', 'Unknown')}\n"
+                    markdown += f"**Department**: {task.get('swimlane', 'Unknown')}\n"
+                    markdown += f"**Owner**: {task.get('task_owner', 'Unknown')}\n"
+                    markdown += f"**Current Cost**: ${task.get('total_cost', 0):.2f}\n"
+                    markdown += f"**Current Time**: {task.get('time_hours', 0):.2f} hours\n"
+                    markdown += f"**Status**: {task.get('task_status', 'Unknown')}\n"
+                    markdown += f"**Tools**: {task.get('tools_used', 'N/A')}\n\n"
+                    task_has_faqs = True
+                
+                markdown += f"**Q{i}**: {question}\n"
+                markdown += f"**A{i}**: {answer}\n\n"
+                faqs_found = True
+        
+        if task_has_faqs:
+            markdown += "---\n\n"
+    
+    if not faqs_found:
+        markdown += "*No FAQs captured in the current data.*\n\n"
+    
+    # Summary table
+    markdown += "## 📊 FAQ Summary Table\n\n"
+    markdown += "| Task Name | Department | Owner | FAQ # | Question | Answer | Current Cost | Current Time |\n"
+    markdown += "|-----------|------------|-------|-------|----------|---------|--------------|--------------|\n"
+    
+    for task in combined_tasks:
+        for i in range(1, 4):
+            q_key = f'faq_q{i}'
+            a_key = f'faq_a{i}'
+            question = task.get(q_key, '')
+            answer = task.get(a_key, '')
+            
+            if question and question.strip() and answer and answer.strip():
+                markdown += f"| {task.get('name', 'Unknown')} | {task.get('swimlane', 'Unknown')} | {task.get('task_owner', 'Unknown')} | {i} | {question[:50]}{'...' if len(question) > 50 else ''} | {answer[:50]}{'...' if len(answer) > 50 else ''} | ${task.get('total_cost', 0):.2f} | {task.get('time_hours', 0):.2f}h |\n"
+    
+    markdown += f"\n---\n*FAQ Knowledge report generated by Inocta BPM Analysis*\n*Total tasks analyzed: {len(combined_tasks)}*\n"
+    
+    return markdown
+
+def generate_documentation_status_markdown(combined_tasks):
+    """Generate a Markdown report focused on documentation status."""
+    
+    markdown = f"""# Documentation Status Report
+*Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+
+## 📋 Report Summary
+- **Total Tasks Analyzed**: {len(combined_tasks)}
+- **Focus**: Documentation Compliance and Status
+
+## 📚 Documentation Status Analysis
+
+"""
+    
+    # Group by documentation status
+    doc_status_counts = {}
+    for task in combined_tasks:
+        doc_status = task.get('doc_status', 'Unknown')
+        if doc_status not in doc_status_counts:
+            doc_status_counts[doc_status] = 0
+        doc_status_counts[doc_status] += 1
+    
+    markdown += "## 📊 Documentation Status Breakdown\n\n"
+    markdown += "| Status | Count | Percentage |\n"
+    markdown += "|--------|-------|------------|\n"
+    
+    total_tasks = len(combined_tasks)
+    for status, count in doc_status_counts.items():
+        percentage = (count / total_tasks * 100) if total_tasks > 0 else 0
+        markdown += f"| {status} | {count} | {percentage:.1f}% |\n"
+    
+    markdown += "\n## 📝 Detailed Documentation Status\n\n"
+    markdown += "| Task Name | Department | Owner | Doc Status | Doc URL | Current Cost | Current Time |\n"
+    markdown += "|-----------|------------|-------|------------|---------|--------------|--------------|\n"
+    
+    for task in combined_tasks:
+        markdown += f"| {task.get('name', 'Unknown')} | {task.get('swimlane', 'Unknown')} | {task.get('task_owner', 'Unknown')} | {task.get('doc_status', 'Unknown')} | {task.get('doc_url', 'N/A')} | ${task.get('total_cost', 0):.2f} | {task.get('time_hours', 0):.2f}h |\n"
+    
+    markdown += f"\n---\n*Documentation Status report generated by Inocta BPM Analysis*\n*Total tasks analyzed: {len(combined_tasks)}*\n"
+    
+    return markdown
+
+def generate_tools_analysis_markdown(combined_tasks):
+    """Generate a Markdown report focused on tools analysis."""
+    
+    markdown = f"""# Tools Analysis Report
+*Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+
+## 📋 Report Summary
+- **Total Tasks Analyzed**: {len(combined_tasks)}
+- **Focus**: Tools Usage and Standardization Opportunities
+
+## 🛠️ Tools Usage Analysis
+
+"""
+    
+    # Group by tools
+    tools_usage = {}
+    for task in combined_tasks:
+        tools = task.get('tools_used', '')
+        if tools and tools.strip():
+            tool_list = [tool.strip() for tool in tools.split(',') if tool.strip()]
+            for tool in tool_list:
+                if tool not in tools_usage:
+                    tools_usage[tool] = {
+                        'task_count': 0,
+                        'total_cost': 0,
+                        'total_time': 0,
+                        'tasks': []
+                    }
+                
+                tools_usage[tool]['task_count'] += 1
+                tools_usage[tool]['total_cost'] += task.get('total_cost', 0)
+                tools_usage[tool]['total_time'] += task.get('time_hours', 0)
+                tools_usage[tool]['tasks'].append(task.get('name', 'Unknown'))
+    
+    markdown += "## 📊 Tools Usage Summary\n\n"
+    markdown += "| Tool | Task Count | Total Cost | Total Time |\n"
+    markdown += "|------|------------|------------|------------|\n"
+    
+    for tool, data in tools_usage.items():
+        markdown += f"| {tool} | {data['task_count']} | ${data['total_cost']:.2f} | {data['total_time']:.2f}h |\n"
+    
+    markdown += "\n## 📝 Detailed Tools Usage\n\n"
+    markdown += "| Task Name | Department | Owner | Tool Used | Original Tools Field | Current Cost | Current Time |\n"
+    markdown += "|-----------|------------|-------|-----------|---------------------|--------------|--------------|\n"
+    
+    for task in combined_tasks:
+        tools = task.get('tools_used', '')
+        if tools and tools.strip():
+            tool_list = [tool.strip() for tool in tools.split(',') if tool.strip()]
+            for tool in tool_list:
+                markdown += f"| {task.get('name', 'Unknown')} | {task.get('swimlane', 'Unknown')} | {task.get('task_owner', 'Unknown')} | {tool} | {tools} | ${task.get('total_cost', 0):.2f} | {task.get('time_hours', 0):.2f}h |\n"
+        else:
+            markdown += f"| {task.get('name', 'Unknown')} | {task.get('swimlane', 'Unknown')} | {task.get('task_owner', 'Unknown')} | No tools specified | N/A | ${task.get('total_cost', 0):.2f} | {task.get('time_hours', 0):.2f}h |\n"
+    
+    markdown += f"\n---\n*Tools Analysis report generated by Inocta BPM Analysis*\n*Total tasks analyzed: {len(combined_tasks)}*\n"
     
     return markdown
 
