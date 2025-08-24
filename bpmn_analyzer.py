@@ -146,6 +146,10 @@ class BPMNAnalyzer:
             Parsed task dictionary
         """
         try:
+            # Add null checks for task parameter
+            if task is None:
+                return self._create_default_task(swimlane_name, task_type)
+            
             task_id = task.get('@id', 'Unknown')
             task_name = task.get('@name', 'Unknown')
             
@@ -222,37 +226,41 @@ class BPMNAnalyzer:
             # Log error but don't show it to user to avoid cluttering the interface
             print(f"Warning: Error parsing task {task.get('@id', 'Unknown')}: {str(e)}")
             # Return a minimal task object instead of None to avoid breaking the analysis
-            return {
-                'id': task.get('@id', 'Unknown'),
-                'name': task.get('@name', 'Unknown'),
-                'swimlane': swimlane_name,
-                'type': task_type.replace('bpmn:', ''),
-                'time_hhmm': '00:00',
-                'time_display': '00:00',  # Formatted for display
-                'time_minutes': 0,
-                'time_hours': 0,
-                'cost_per_hour': 0,
-                'currency': 'Unknown',
-                'other_costs': 0,
-                'labor_cost': 0,
-                'total_cost': 0,
-                'task_owner': 'Unknown',
-                'task_description': '',
-                'task_status': 'Unknown',
-                'doc_status': 'Unknown',
-                'tools_used': '',
-                'opportunities': '',
-                'issues_text': '',
-                'issues_priority': '',
-                'faq_q1': '',
-                'faq_a1': '',
-                'faq_q2': '',
-                'faq_a2': '',
-                'faq_q3': '',
-                'faq_a3': '',
-                'task_industry': '',
-                'doc_url': ''
-            }
+            return self._create_default_task(swimlane_name, task_type)
+    
+    def _create_default_task(self, swimlane_name: str, task_type: str) -> Dict[str, Any]:
+        """Create a default task object when parsing fails."""
+        return {
+            'id': 'Unknown',
+            'name': 'Unknown',
+            'swimlane': swimlane_name,
+            'type': task_type.replace('bpmn:', ''),
+            'time_hhmm': '00:00',
+            'time_display': '00:00',
+            'time_minutes': 0,
+            'time_hours': 0,
+            'cost_per_hour': 0,
+            'currency': 'Unknown',
+            'other_costs': 0,
+            'labor_cost': 0,
+            'total_cost': 0,
+            'task_owner': 'Unknown',
+            'task_description': '',
+            'task_status': 'Unknown',
+            'doc_status': 'Unknown',
+            'tools_used': '',
+            'opportunities': '',
+            'issues_text': '',
+            'issues_priority': '',
+            'faq_q1': '',
+            'faq_a1': '',
+            'faq_q2': '',
+            'faq_a2': '',
+            'faq_q3': '',
+            'faq_a3': '',
+            'task_industry': '',
+            'doc_url': ''
+        }
     
     def _parse_time_to_minutes(self, time_str: str) -> int:
         """
