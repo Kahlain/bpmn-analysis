@@ -3597,8 +3597,43 @@ def main():
                     # Show sample data structure
                     if combined_tasks:
                         st.subheader("📋 Sample Data Structure")
-                        sample_task = combined_tasks[0]
-                        st.json(sample_task)
+                        
+                        # Create an ideal, fictional example that showcases all features
+                        ideal_sample_task = {
+                            "id": "Activity_ideal_001",
+                            "name": "Strategic Planning Workshop",
+                            "swimlane": "Business Development",
+                            "type": "task",
+                            "time_hhmm": "8:00",
+                            "time_display": "08:00",
+                            "time_minutes": 480,
+                            "time_hours": 8.0,
+                            "cost_per_hour": 200,
+                            "currency": "USD",
+                            "other_costs": 500,
+                            "labor_cost": 1600,
+                            "total_cost": 2100,
+                            "task_owner": "Sarah Johnson",
+                            "task_description": "Facilitate strategic planning session with key stakeholders to define company roadmap and growth objectives for the next fiscal year",
+                            "task_status": "In Progress",
+                            "doc_status": "Documentation In Progress",
+                            "tools_used": "Miro, Zoom, Google Workspace, Strategy Canvas",
+                            "opportunities": "Potential to standardize planning methodology across departments and create reusable templates for future planning cycles",
+                            "issues_text": "Stakeholder availability conflicts may delay workshop completion",
+                            "issues_priority": "Medium",
+                            "faq_q1": "What is the expected outcome of this workshop?",
+                            "faq_a1": "A comprehensive strategic roadmap with clear objectives, timelines, and success metrics for the upcoming fiscal year",
+                            "faq_q2": "How often should strategic planning sessions be conducted?",
+                            "faq_a2": "Annually with quarterly review sessions to ensure alignment and adjust priorities as needed",
+                            "faq_q3": "Who should participate in strategic planning?",
+                            "faq_a3": "C-level executives, department heads, and key stakeholders from all business units",
+                            "task_industry": "Strategic Management",
+                            "doc_url": "https://company-wiki.com/strategic-planning/workshop-2024"
+                        }
+                        
+                        st.json(ideal_sample_task)
+                        
+                        st.info("💡 **This is an ideal example showing all available fields and features. Your actual data may have different values and field completeness.**")
     
     else:
         st.info("👆 Please upload BPMN XML files using the sidebar to begin analysis.")
