@@ -1442,7 +1442,15 @@ def main():
                         st.success("🎉 All tasks are in good status! No tasks require attention.")
                 
                 with tab6:
-                    st.subheader("Documentation Status Analysis")
+                    st.subheader("📚 Documentation Status Analysis")
+                    
+                    # Define the 4 documentation statuses from your schema with color coding
+                    doc_status_colors = {
+                        "Documentation Not Needed": "#FFFFFF",  # White
+                        "Documented": "#28A745",               # Green
+                        "In Process to be Documented": "#007BFF", # Blue
+                        "Not Documented": "#FFC107"            # Yellow
+                    }
                     
                     # Group by documentation status
                     doc_status_analysis = {}
@@ -1452,43 +1460,183 @@ def main():
                             doc_status_analysis[doc_status] = {
                                 'task_count': 0,
                                 'total_cost': 0,
-                                'total_time_minutes': 0
+                                'total_time_minutes': 0,
+                                'tasks_with_urls': 0,
+                                'tasks_without_urls': 0
                             }
                         
                         doc_status_analysis[doc_status]['task_count'] += 1
                         doc_status_analysis[doc_status]['total_cost'] += task.get('total_cost', 0)
                         doc_status_analysis[doc_status]['total_time_minutes'] += task.get('time_minutes', 0)
+                        
+                        # Count tasks with/without URLs
+                        if task.get('doc_url') and task.get('doc_url') != '' and task.get('doc_url') != 'NR':
+                            doc_status_analysis[doc_status]['tasks_with_urls'] += 1
+                        else:
+                            doc_status_analysis[doc_status]['tasks_without_urls'] += 1
                     
                     # Create documentation status dataframe
                     doc_status_df = pd.DataFrame(doc_status_analysis).T.reset_index()
-                    # Rename columns to match expected structure
-                    doc_status_df.columns = ['Documentation Status', 'Task Count', 'Total Cost', 'total_time_minutes']
+                    doc_status_df.columns = ['Documentation Status', 'Task Count', 'Total Cost', 'total_time_minutes', 'Tasks with URLs', 'Tasks without URLs']
+                    
                     # Calculate hours from minutes
                     doc_status_df['Total Time (hrs)'] = doc_status_df['total_time_minutes'] / 60
-                    # Rename the minutes column for display
-                    doc_status_df = doc_status_df.rename(columns={'total_time_minutes': 'Total Time (min)'})
                     
-                    st.dataframe(doc_status_df, use_container_width=True)
+                    # Calculate percentages
+                    total_tasks = doc_status_df['Task Count'].sum()
+                    doc_status_df['Percentage'] = (doc_status_df['Task Count'] / total_tasks * 100).round(1)
                     
-                    # Documentation status chart
-                    fig = px.pie(
-                        doc_status_df,
-                        values='Task Count',
-                        names='Documentation Status',
-                        title='Tasks by Documentation Status'
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
+                    # Reorder columns for better display
+                    doc_status_df = doc_status_df[['Documentation Status', 'Task Count', 'Percentage', 'Total Cost', 'Total Time (hrs)', 'Tasks with URLs', 'Tasks without URLs']]
                     
-                    # Documentation status cost chart
-                    fig2 = px.bar(
-                        doc_status_df,
-                        x='Documentation Status',
-                        y='Total Cost',
-                        title='Total Cost by Documentation Status',
-                        color='Task Count',
-                        color_continuous_scale='viridis'
-                    )
-                    st.plotly_chart(fig2, use_container_width=True)
+                    # Display high-level documentation metrics
+                    st.markdown("**🎯 Documentation State of the Nation**")
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        total_documented = doc_status_analysis.get('Documented', {}).get('task_count', 0)
+                        st.metric(
+                            "✅ Documented Tasks", 
+                            f"{total_documented}/{total_tasks}",
+                            f"{total_documented/total_tasks*100:.1f}%" if total_tasks > 0 else "0%"
+                        )
+                    
+                    with col2:
+                        total_in_process = doc_status_analysis.get('In Process to be Documented', {}).get('task_count', 0)
+                        st.metric(
+                            "🔄 In Process", 
+                            f"{total_in_process}/{total_tasks}",
+                            f"{total_in_process/total_tasks*100:.1f}%" if total_tasks > 0 else "0%"
+                        )
+                    
+                    with col3:
+                        total_not_documented = doc_status_analysis.get('Not Documented', {}).get('task_count', 0)
+                        st.metric(
+                            "⚠️ Not Documented", 
+                            f"{total_not_documented}/{total_tasks}",
+                            f"{total_not_documented/total_tasks*100:.1f}%" if total_tasks > 0 else "0%"
+                        )
+                    
+                    with col4:
+                        total_with_urls = sum(status_data.get('tasks_with_urls', 0) for status_data in doc_status_analysis.values())
+                        st.metric(
+                            "🔗 With URLs", 
+                            f"{total_with_urls}/{total_tasks}",
+                            f"{total_with_urls/total_tasks*100:.1f}%" if total_tasks > 0 else "0%"
+                        )
+                    
+                    st.markdown("---")
+                    
+                    # Display detailed status table
+                    st.write("**📊 Detailed Documentation Status Breakdown**")
+                    
+                    # Apply color coding to the dataframe
+                    def color_status(val):
+                        if val in doc_status_colors:
+                            return f'background-color: {doc_status_colors[val]}'
+                        return ''
+                    
+                    styled_df = doc_status_df.style.applymap(color_status, subset=['Documentation Status'])
+                    st.dataframe(styled_df, use_container_width=True)
+                    
+                    # Create two columns for charts
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        # Pie chart with color coding
+                        fig = px.pie(
+                            doc_status_df,
+                            values='Task Count',
+                            names='Documentation Status',
+                            title='📊 Tasks by Documentation Status',
+                            color_discrete_map=doc_status_colors
+                        )
+                        fig.update_traces(textposition='inside', textinfo='percent+label')
+                        st.plotly_chart(fig, use_container_width=True)
+                    
+                    with col2:
+                        # Bar chart for cost analysis
+                        fig2 = px.bar(
+                            doc_status_df,
+                            x='Documentation Status',
+                            y='Total Cost',
+                            title='💰 Total Cost by Documentation Status',
+                            color='Task Count',
+                            color_continuous_scale='viridis'
+                        )
+                        st.plotly_chart(fig2, use_container_width=True)
+                    
+                    # Documentation coverage analysis
+                    st.markdown("---")
+                    st.write("**🔍 Documentation Coverage Analysis**")
+                    
+                    # Calculate coverage metrics
+                    documented_tasks = doc_status_analysis.get('Documented', {}).get('task_count', 0)
+                    in_process_tasks = doc_status_analysis.get('In Process to be Documented', {}).get('task_count', 0)
+                    coverage_percentage = ((documented_tasks + in_process_tasks) / total_tasks * 100) if total_tasks > 0 else 0
+                    
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        if coverage_percentage >= 80:
+                            st.success(f"📈 Documentation Coverage: {coverage_percentage:.1f}%")
+                        elif coverage_percentage >= 60:
+                            st.warning(f"📊 Documentation Coverage: {coverage_percentage:.1f}%")
+                        else:
+                            st.error(f"📉 Documentation Coverage: {coverage_percentage:.1f}%")
+                    
+                    with col2:
+                        tasks_needing_docs = doc_status_analysis.get('Not Documented', {}).get('task_count', 0)
+                        st.metric("📝 Tasks Needing Documentation", tasks_needing_docs)
+                    
+                    with col3:
+                        tasks_in_process = doc_status_analysis.get('In Process to be Documented', {}).get('task_count', 0)
+                        st.metric("🔄 Tasks In Process", tasks_in_process)
+                    
+                    # Tasks requiring documentation attention
+                    st.markdown("---")
+                    st.write("**⚠️ Tasks Requiring Documentation Attention**")
+                    
+                    # Filter tasks that need documentation
+                    tasks_needing_docs = [task for task in combined_tasks 
+                                        if task.get('doc_status') in ['Not Documented', 'In Process to be Documented']]
+                    
+                    if tasks_needing_docs:
+                        attention_df = pd.DataFrame(tasks_needing_docs)
+                        display_columns = ['name', 'swimlane', 'task_owner', 'doc_status', 'doc_url', 'time_display', 'total_cost']
+                        available_columns = [col for col in display_columns if col in attention_df.columns]
+                        
+                        st.dataframe(
+                            attention_df[available_columns],
+                            use_container_width=True,
+                            column_config={
+                                "doc_status": st.column_config.TextColumn(
+                                    "Documentation Status",
+                                    help="Current documentation status",
+                                    max_chars=30
+                                ),
+                                "doc_url": st.column_config.LinkColumn(
+                                    "Documentation URL",
+                                    help="Click to open documentation link",
+                                    max_chars=50
+                                )
+                            }
+                        )
+                        
+                        # Summary of documentation attention needed
+                        total_attention_cost = sum(task.get('total_cost', 0) for task in tasks_needing_docs)
+                        total_attention_time = sum(task.get('time_hours', 0) for task in tasks_needing_docs)
+                        
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Tasks Needing Docs", len(tasks_needing_docs))
+                        with col2:
+                            st.metric("Total Cost at Risk", f"${total_attention_cost:,.2f}")
+                        with col3:
+                            st.metric("Total Time at Risk", f"{total_attention_time:.1f} hrs")
+                    else:
+                        st.success("🎉 All tasks are properly documented! No documentation attention needed.")
                 
                 with tab7:
                     st.subheader("Tools Analysis")

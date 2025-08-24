@@ -191,7 +191,7 @@ Your BPMN files should include **Camunda Properties** with the following metadat
 - **🏭 Swimlane Analysis**: Department-based analysis
 - **👥 Owner Analysis**: Task owner insights
 - **📊 Status Analysis**: Task status tracking with attention tasks
-- **📚 Documentation Status**: Documentation compliance
+- **📚 Documentation Status**: Comprehensive documentation state analysis with color coding
 - **🔧 Tools Analysis**: Tool usage patterns
 - **💡 Opportunities**: Improvement opportunities
 - **⚠️ Issues & Risks**: Problem identification
@@ -220,12 +220,11 @@ The Tasks Overview table now includes comprehensive documentation tracking with 
 
 ### **Documentation Tracking** ✨ **NEW**
 - **`doc_status`**: Documentation status with visual indicators:
-  - ✅ **Complete**: Documentation is finished
-  - 🔄 **In Progress**: Documentation is being worked on
-  - ⏳ **Pending**: Documentation is waiting to start
-  - 🚫 **Not Started**: Documentation hasn't begun
-  - 📝 **Draft**: Documentation is in draft form
-  - 📋 **Unknown**: Status not specified
+  - ✅ **Documented - Green**: Documentation is complete and available
+  - 🔄 **In Process to be Documented - Blue**: Documentation is currently being worked on
+  - ⚠️ **Not Documented - Yellow**: Documentation is missing and needs attention
+  - ⚪ **Documentation Not Needed - White**: No documentation required for this task
+  - 📋 **Unknown**: Status not specified in BPMN file
 
 - **`doc_url`**: Clickable documentation links:
   - URLs are truncated in the table for readability
@@ -238,6 +237,28 @@ The Tasks Overview table now includes comprehensive documentation tracking with 
 - **Visual Indicators**: Emoji-based status display for quick recognition
 - **Clickable Links**: Direct access to task documentation
 - **Coverage Metrics**: Percentage of tasks with complete documentation
+
+## 📚 **Enhanced Documentation Status Analysis**
+
+The Documentation Status tab now provides a comprehensive "state of the nation" view for your documentation:
+
+### **🎯 Documentation State of the Nation**
+- **High-level Metrics**: Quick overview of documented vs. undocumented tasks
+- **Color-coded Status**: Visual representation matching your schema colors
+- **Coverage Analysis**: Real-time documentation coverage percentage
+- **URL Tracking**: Count of tasks with/without documentation links
+
+### **📊 Detailed Analysis**
+- **Status Breakdown Table**: Complete breakdown with percentages, costs, and time
+- **Color-coded Pie Chart**: Visual distribution using your schema colors
+- **Cost Analysis**: Financial impact by documentation status
+- **Coverage Metrics**: Success/warning/error indicators based on coverage
+
+### **⚠️ Action Items**
+- **Tasks Requiring Attention**: Detailed table of tasks needing documentation
+- **Risk Assessment**: Cost and time at risk for undocumented tasks
+- **Progress Tracking**: Monitor tasks currently being documented
+- **URL Validation**: Identify tasks missing documentation links
 
 ## 🌟 Key Features Explained
 
