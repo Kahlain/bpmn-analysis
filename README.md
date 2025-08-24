@@ -1,6 +1,8 @@
-# 📊 Inocta BPM Analysis
+# 📊 Inocta BPM Analysis v2.0.0
 
 A powerful, interactive web application for analyzing BPMN (Business Process Model and Notation) XML files to extract business insights, calculate costs, and provide comprehensive KPI analysis for process optimization.
+
+> **🚀 Version 2.0.0 - Major Release**: Complete UI/UX overhaul with enterprise-grade features and professional user experience!
 
 > **🌐 Public Repository**: This project is now open source and available for the community!
 
@@ -356,6 +358,63 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **v1.2.0** - Enhanced with Opportunities, Issues, and FAQ analysis
 - **v1.3.0** - Multi-format export and improved categorization
 - **v1.4.0** - Multi-language support and enhanced quality control
+- **v2.0.0** - 🚀 **MAJOR RELEASE**: Complete UI/UX overhaul with enhanced Tasks Overview, Documentation Status tracking, Tools Analysis improvements, Quality Control alignment, and comprehensive export functionality
+
+### 🚀 **Version 2.0.0 - Major Release Highlights**
+
+#### **✨ Enhanced Tasks Overview Table**
+- **New Task Description Column**: Added comprehensive task description display
+- **Documentation Status Tracking**: Visual indicators with emojis and color coding
+- **Clickable Documentation URLs**: Direct access to task documentation
+- **Smart Filtering**: Enhanced filtering by swimlane, owner, status, and documentation
+- **Documentation Summary**: Real-time statistics on documentation coverage
+
+#### **📚 Documentation Status Analysis**
+- **State of the Nation View**: Comprehensive documentation overview dashboard
+- **Schema-Aligned Statuses**: Direct integration with your BPMN documentation schema
+- **Color-Coded Visualization**: Professional color scheme matching your standards
+- **Coverage Metrics**: Real-time documentation coverage percentages
+- **Action Item Tracking**: Flagged tasks requiring documentation attention
+- **Unknown Status Handling**: Explicit "Unknown" status for missing data
+
+#### **🔧 Tools Analysis Improvements**
+- **Task Names Integration**: Added task names column to tools table
+- **Enhanced Data Cleaning**: Improved tool name standardization and deduplication
+- **Detailed Task Breakdown**: Expandable sections showing all tasks per tool
+- **Cleanup Recommendations**: Actionable guidance for data standardization
+- **Inconsistent Entry Detection**: Smart identification of malformed tool entries
+
+#### **✅ Quality Control Alignment**
+- **Conditional Validation**: Smart validation based on field dependencies
+- **Enhanced FAQ Validation**: Complete Q&A pair validation with status indicators
+- **Data Quality Scoring**: Overall quality score with compliance percentages
+- **Field-by-Field Analysis**: Detailed breakdown of issues per field type
+- **Improvement Recommendations**: Actionable quality enhancement suggestions
+- **Cost Validation Fix**: Proper handling of zero-cost tasks
+
+#### **📊 Export Functionality Enhancement**
+- **New Export Scopes**: FAQ Knowledge, Documentation Status, and Tools Analysis
+- **Multi-Format Support**: Excel, CSV, JSON, and Markdown for all new features
+- **Comprehensive Coverage**: All new features fully integrated into export system
+- **Structured Data**: Well-organized export formats for further analysis
+
+#### **🎨 UI/UX Improvements**
+- **Professional Layout**: Clean, intuitive interface design
+- **Visual Indicators**: Emojis, colors, and status symbols for quick recognition
+- **Responsive Design**: Better mobile and desktop experience
+- **Helpful Tooltips**: Context-sensitive assistance throughout the application
+- **Consistent Styling**: Unified visual language across all tabs
+
+#### **🔍 Technical Enhancements**
+- **Code Quality**: Improved error handling and validation logic
+- **Performance**: Optimized data processing and visualization rendering
+- **Maintainability**: Better code structure and documentation
+- **Compatibility**: Enhanced support for various BPMN file formats
+- **Error Handling**: Robust parsing with graceful fallbacks
+
+---
+
+**🎯 Version 2.0.0 represents a complete transformation of the BPMN Analysis tool, making it enterprise-ready with professional-grade features and user experience.**
 
 ---
 
