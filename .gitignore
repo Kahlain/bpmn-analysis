@@ -252,3 +252,7 @@ example/
 !runtime.txt
 !setup.py
 !requirements-deploy.txt
+# Review and documentation files
+CODEBASE_REVIEW.md
+CODEBASE_REVIEW_SUMMARY.txt
+CLEANUP_LOG.txt

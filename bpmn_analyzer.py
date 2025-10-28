@@ -1013,78 +1013,173 @@ def main():
                             fig.update_traces(textposition='inside', textinfo='percent+label')
                             st.plotly_chart(fig, use_container_width=True)
                     
-                    # Summary charts row 3 - Currency and Industry Analysis
+                    # Data Audit Results
+                    st.markdown("### 🔍 Data Audit Results")
+                    
+                    # Calculate audit metrics
+                    audit_results = {
+                        'total_tasks': len(combined_tasks),
+                        'tasks_with_missing_data': 0,
+                        'missing_swimlanes': 0,
+                        'missing_owners': 0,
+                        'missing_time': 0,
+                        'missing_cost': 0,
+                        'calculation_errors': 0
+                    }
+                    
+                    for task in combined_tasks:
+                        if not task.get('swimlane') or task.get('swimlane') == 'Unknown':
+                            audit_results['missing_swimlanes'] += 1
+                            audit_results['tasks_with_missing_data'] += 1
+                        if not task.get('task_owner'):
+                            audit_results['missing_owners'] += 1
+                            audit_results['tasks_with_missing_data'] += 1
+                        if not task.get('time_hhmm'):
+                            audit_results['missing_time'] += 1
+                            audit_results['tasks_with_missing_data'] += 1
+                        # Check if cost_per_hour is missing (not just 0)
+                        cost_per_hour = task.get('cost_per_hour')
+                        if cost_per_hour is None or cost_per_hour == '':
+                            audit_results['missing_cost'] += 1
+                            audit_results['tasks_with_missing_data'] += 1
+                        
+                        # Verify cost calculations
+                        time_minutes = task.get('time_minutes', 0)
+                        cost_per_hour = task.get('cost_per_hour', 0)
+                        calculated_cost = (time_minutes / 60) * cost_per_hour
+                        actual_cost = task.get('total_cost', 0)
+                        if abs(calculated_cost - actual_cost) > 0.01:
+                            audit_results['calculation_errors'] += 1
+                    
+                    # Health check calculations
+                    def calculate_documentation_health(combined_tasks):
+                        """Calculate documentation health metrics"""
+                        total_tasks = len(combined_tasks)
+                        tasks_needing_docs = [task for task in combined_tasks 
+                                             if task.get('doc_status') in ['Not Documented', 
+                                                                          'In Process to be Documented']]
+                        tasks_requiring_count = len(tasks_needing_docs)
+                        tasks_documented = [task for task in combined_tasks 
+                                          if task.get('doc_status') == 'Documented']
+                        tasks_documented_count = len(tasks_documented)
+                        
+                        if total_tasks > 0:
+                            health_percentage = (tasks_documented_count / total_tasks) * 100
+                        else:
+                            health_percentage = 0
+                        
+                        return {
+                            'total_tasks': total_tasks,
+                            'tasks_requiring_documentation': tasks_requiring_count,
+                            'tasks_documented': tasks_documented_count,
+                            'health_percentage': health_percentage,
+                            'health_status': 'Excellent' if health_percentage >= 90 
+                                           else 'Good' if health_percentage >= 75 
+                                           else 'Fair' if health_percentage >= 50 
+                                           else 'Poor'
+                        }
+                    
+                    def calculate_attention_health(combined_tasks):
+                        """Calculate attention tasks health metrics"""
+                        total_tasks = len(combined_tasks)
+                        attention_count = 0
+                        
+                        for task in combined_tasks:
+                            needs_attention = False
+                            if not task.get('swimlane') or task.get('swimlane') == 'Unknown':
+                                needs_attention = True
+                            if not task.get('task_owner'):
+                                needs_attention = True
+                            if not task.get('time_hhmm'):
+                                needs_attention = True
+                            if task.get('doc_status') in ['Not Documented', 'In Process to be Documented']:
+                                needs_attention = True
+                            
+                            if needs_attention:
+                                attention_count += 1
+                        
+                        if total_tasks > 0:
+                            health_percentage = ((total_tasks - attention_count) / total_tasks) * 100
+                        else:
+                            health_percentage = 0
+                        
+                        return {
+                            'total_tasks': total_tasks,
+                            'tasks_requiring_attention': attention_count,
+                            'health_percentage': health_percentage,
+                            'health_status': 'Excellent' if health_percentage >= 90 
+                                           else 'Good' if health_percentage >= 75 
+                                           else 'Fair' if health_percentage >= 50 
+                                           else 'Poor'
+                        }
+                    
+                    # Calculate health scores
+                    doc_health = calculate_documentation_health(combined_tasks)
+                    attention_health = calculate_attention_health(combined_tasks)
+                    
+                    # Store in session state for later use
+                    st.session_state['audit_results'] = audit_results
+                    st.session_state['doc_health'] = doc_health
+                    st.session_state['attention_health'] = attention_health
+                    
+                    # Display audit results
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        if audit_results['tasks_with_missing_data'] == 0:
+                            st.success(f"✅ Data Quality: {100 - (audit_results['tasks_with_missing_data']/audit_results['total_tasks']*100):.1f}%")
+                        else:
+                            st.warning(f"⚠️ Data Quality: {100 - (audit_results['tasks_with_missing_data']/audit_results['total_tasks']*100):.1f}%")
+                        
+                        if audit_results['missing_swimlanes'] > 0:
+                            st.metric("Missing Swimlanes", audit_results['missing_swimlanes'])
+                        if audit_results['missing_owners'] > 0:
+                            st.metric("Missing Owners", audit_results['missing_owners'])
+                    
+                    with col2:
+                        if audit_results['missing_time'] > 0:
+                            st.metric("Missing Time Estimates", audit_results['missing_time'])
+                        if audit_results['missing_cost'] > 0:
+                            st.metric("Missing Cost Data", audit_results['missing_cost'])
+                    
+                    with col3:
+                        if audit_results['calculation_errors'] > 0:
+                            st.error(f"❌ Calculation Errors: {audit_results['calculation_errors']}")
+                        else:
+                            st.success("✅ All Calculations Correct")
+                    
+                    # Health check metrics
+                    st.markdown("### 🏥 Process Health Checks")
+                    
                     col1, col2 = st.columns(2)
                     
                     with col1:
-                        # Currency analysis
-                        currency_analysis = {}
-                        for task in combined_tasks:
-                            currency = task.get('currency', 'Unknown')
-                            if currency not in currency_analysis:
-                                currency_analysis[currency] = {
-                                    'task_count': 0,
-                                    'total_cost': 0,
-                                    'total_time_minutes': 0
-                                }
-                            
-                            currency_analysis[currency]['task_count'] += 1
-                            currency_analysis[currency]['total_cost'] += task.get('total_cost', 0)
-                            currency_analysis[currency]['total_time_minutes'] += task.get('time_minutes', 0)
+                        if doc_health['health_status'] == 'Excellent':
+                            st.success(f"📚 Documentation Health: {doc_health['health_percentage']:.1f}%")
+                        elif doc_health['health_status'] == 'Good':
+                            st.warning(f"📚 Documentation Health: {doc_health['health_percentage']:.1f}%")
+                        else:
+                            st.error(f"📚 Documentation Health: {doc_health['health_percentage']:.1f}%")
                         
-                        if currency_analysis:
-                            currency_df = pd.DataFrame(currency_analysis).T.reset_index()
-                            # Rename columns to match expected structure
-                            currency_df.columns = ['Currency', 'Task Count', 'Total Cost', 'total_time_minutes']
-                            # Calculate hours from minutes
-                            currency_df['Total Time (hrs)'] = currency_df['total_time_minutes'] / 60
-                            # Rename the minutes column for display
-                            currency_df = currency_df.rename(columns={'total_time_minutes': 'Total Time (min)'})
-                            
-                            fig = px.bar(
-                                currency_df,
-                                x='Currency',
-                                y='Total Cost',
-                                title='Cost Distribution by Currency',
-                                color='Task Count',
-                                color_continuous_scale='oranges'
-                            )
-                            st.plotly_chart(fig, use_container_width=True)
+                        st.metric(
+                            "Tasks Requiring Documentation",
+                            f"{doc_health['tasks_requiring_documentation']}/{doc_health['total_tasks']}"
+                        )
                     
                     with col2:
-                        # Industry analysis
-                        industry_analysis = {}
-                        for task in combined_tasks:
-                            industry = task.get('task_industry', 'Unknown')
-                            if industry not in industry_analysis:
-                                industry_analysis[industry] = {
-                                    'task_count': 0,
-                                    'total_cost': 0,
-                                    'total_time_minutes': 0
-                                }
-                            
-                            industry_analysis[industry]['task_count'] += 1
-                            industry_analysis[industry]['total_cost'] += task.get('total_cost', 0)
-                            industry_analysis[industry]['total_time_minutes'] += task.get('time_minutes', 0)
+                        if attention_health['health_status'] == 'Excellent':
+                            st.success(f"⚠️ Attention Health: {attention_health['health_percentage']:.1f}%")
+                        elif attention_health['health_status'] == 'Good':
+                            st.warning(f"⚠️ Attention Health: {attention_health['health_percentage']:.1f}%")
+                        else:
+                            st.error(f"⚠️ Attention Health: {attention_health['health_percentage']:.1f}%")
                         
-                        if industry_analysis:
-                            industry_df = pd.DataFrame(industry_analysis).T.reset_index()
-                            # Rename columns to match expected structure
-                            industry_df.columns = ['Industry', 'Task Count', 'Total Cost', 'total_time_minutes']
-                            # Calculate hours from minutes
-                            industry_df['Total Time (hrs)'] = industry_df['total_time_minutes'] / 60
-                            # Rename the minutes column for display
-                            industry_df = industry_df.rename(columns={'total_time_minutes': 'Total Time (min)'})
-                            
-                            fig = px.bar(
-                                industry_df,
-                                x='Industry',
-                                y='Task Count',
-                                title='Task Distribution by Industry',
-                                color='Total Cost',
-                                color_continuous_scale='plasma'
-                            )
-                            st.plotly_chart(fig, use_container_width=True)
+                        st.metric(
+                            "Tasks Requiring Attention",
+                            f"{attention_health['tasks_requiring_attention']}/{attention_health['total_tasks']}"
+                        )
+                    
+                    st.markdown("---")
                     
                     # Key insights and recommendations
                     st.subheader("🔍 Key Insights & Recommendations")
@@ -1710,34 +1805,60 @@ def main():
                                         if task.get('doc_status') in ['Not Documented', 'In Process to be Documented']]
                     
                     if tasks_needing_docs:
-                        attention_df = pd.DataFrame(tasks_needing_docs)
-                        display_columns = ['name', 'swimlane', 'task_owner', 'doc_status', 'doc_url', 'time_display', 'total_cost']
-                        available_columns = [col for col in display_columns if col in attention_df.columns]
+                        # Add filter by documentation status
+                        unique_statuses = list(set(task.get('doc_status', 'Unknown') for task in tasks_needing_docs))
+                        unique_statuses.sort()
                         
-                        st.dataframe(
-                            attention_df[available_columns],
-                            use_container_width=True,
-                            column_config={
-                                "doc_status": st.column_config.TextColumn(
-                                    "Documentation Status",
-                                    help="Current documentation status",
-                                    max_chars=30
-                                ),
-                                "doc_url": st.column_config.LinkColumn(
-                                    "Documentation URL",
-                                    help="Click to open documentation link",
-                                    max_chars=50
-                                )
-                            }
-                        )
+                        filter_col1, filter_col2 = st.columns([1, 3])
+                        with filter_col1:
+                            selected_status = st.selectbox(
+                                "🔍 Filter by Documentation Status:",
+                                options=['All Statuses'] + unique_statuses,
+                                key='doc_attention_filter'
+                            )
                         
-                        # Summary of documentation attention needed
-                        total_attention_cost = sum(task.get('total_cost', 0) for task in tasks_needing_docs)
-                        total_attention_time = sum(task.get('time_hours', 0) for task in tasks_needing_docs)
+                        # Apply filter if status is selected
+                        if selected_status == 'All Statuses':
+                            filtered_tasks = tasks_needing_docs
+                        else:
+                            filtered_tasks = [task for task in tasks_needing_docs 
+                                            if task.get('doc_status') == selected_status]
+                        
+                        if filtered_tasks:
+                            attention_df = pd.DataFrame(filtered_tasks)
+                            display_columns = ['name', 'swimlane', 'task_owner', 'doc_status', 'doc_url', 'time_display', 'total_cost']
+                            available_columns = [col for col in display_columns if col in attention_df.columns]
+                            
+                            st.dataframe(
+                                attention_df[available_columns],
+                                use_container_width=True,
+                                column_config={
+                                    "doc_status": st.column_config.TextColumn(
+                                        "Documentation Status",
+                                        help="Current documentation status",
+                                        max_chars=30
+                                    ),
+                                    "doc_url": st.column_config.LinkColumn(
+                                        "Documentation URL",
+                                        help="Click to open documentation link",
+                                        max_chars=50
+                                    )
+                                }
+                            )
+                        else:
+                            st.info(f"No tasks found with status: '{selected_status}'")
+                        
+                        # Update summary metrics based on filtered results
+                        
+                        # Summary of documentation attention needed (showing filtered results)
+                        total_attention_cost = sum(task.get('total_cost', 0) for task in filtered_tasks)
+                        total_attention_time = sum(task.get('time_hours', 0) for task in filtered_tasks)
+                        
+                        st.markdown(f"**Showing: {len(filtered_tasks)} of {len(tasks_needing_docs)} tasks requiring documentation**")
                         
                         col1, col2, col3 = st.columns(3)
                         with col1:
-                            st.metric("Tasks Needing Docs", len(tasks_needing_docs))
+                            st.metric("Tasks Needing Docs", len(filtered_tasks))
                         with col2:
                             st.metric("Total Cost at Risk", f"${total_attention_cost:,.2f}")
                         with col3:
