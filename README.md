@@ -359,6 +359,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **v1.3.0** - Multi-format export and improved categorization
 - **v1.4.0** - Multi-language support and enhanced quality control
 - **v2.0.0** - 🚀 **MAJOR RELEASE**: Complete UI/UX overhaul with enhanced Tasks Overview, Documentation Status tracking, Tools Analysis improvements, Quality Control alignment, and comprehensive export functionality
+- **v2.8.0** - ✨ **NEW RELEASE**: Added Data Audit Process, Health Checks (Documentation & Attention), and Documentation Status Filter
 
 ### 🚀 **Version 2.0.0 - Major Release Highlights**
 
