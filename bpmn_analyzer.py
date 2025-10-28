@@ -780,6 +780,9 @@ def main():
     
     st.title("📊 Inocta BPM Analysis")
     
+    # Display version number
+    st.markdown("**Version**: v2.8.0")
+    
     # Custom CSS to fix any display issues
     st.markdown("""
     <style>
