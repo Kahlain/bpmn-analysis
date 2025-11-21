@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="inocta-bpm-analysis",
-    version="1.0.0",
+    version="3.5.0",
     description="BPMN Business Process Analysis Tool",
     author="Inocta",
     packages=find_packages(),

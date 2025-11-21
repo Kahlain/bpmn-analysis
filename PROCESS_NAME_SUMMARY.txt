@@ -1,0 +1,28 @@
+═══════════════════════════════════════════════════════════════
+✅ PROCESS NAME CLEANING IMPLEMENTED
+═══════════════════════════════════════════════════════════════
+
+📝 CHANGES MADE:
+
+1. PROCESS NAME EXTRACTION
+   - Extracts from BPMN file: name attribute in <bpmn:process>
+   - Example: "Développement de nouveaux produits - Companie : Trica Furniture"
+
+2. NAME CLEANING LOGIC
+   - Removes " - Companie : [Company Name]" suffix
+   - Handles both French ("Companie") and English ("Company")
+   - Result: "Développement de nouveaux produits"
+
+3. DISPLAY OPTIONS
+   - If cleaned name exists: "Process: [Clean Name]" (bold)
+   - If not available: "Process Name: Not Available ⚠️"
+
+═══════════════════════════════════════════════════════════════
+🚀 TEST IT NOW:
+
+1. Open: http://localhost:8501
+2. Upload your BPMN file
+3. Check the subtitle below the main title
+4. You should see: "Process: Développement de nouveaux produits"
+
+═══════════════════════════════════════════════════════════════

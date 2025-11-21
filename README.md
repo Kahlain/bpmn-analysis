@@ -1,8 +1,8 @@
-# 📊 Inocta BPM Analysis v2.0.0
+# 📊 Inocta BPM Analysis v3.5.0
 
 A powerful, interactive web application for analyzing BPMN (Business Process Model and Notation) XML files to extract business insights, calculate costs, and provide comprehensive KPI analysis for process optimization.
 
-> **🚀 Version 2.0.0 - Major Release**: Complete UI/UX overhaul with enterprise-grade features and professional user experience!
+> **🚀 Version 3.5.0 - Enhanced Release**: Advanced task analysis with comprehensive table views, documentation status tracking, and improved task health monitoring!
 
 > **🌐 Public Repository**: This project is now open source and available for the community!
 
@@ -358,8 +358,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **v1.2.0** - Enhanced with Opportunities, Issues, and FAQ analysis
 - **v1.3.0** - Multi-format export and improved categorization
 - **v1.4.0** - Multi-language support and enhanced quality control
-- **v2.0.0** - 🚀 **MAJOR RELEASE**: Complete UI/UX overhaul with enhanced Tasks Overview, Documentation Status tracking, Tools Analysis improvements, Quality Control alignment, and comprehensive export functionality
+- **v3.5.0** - ✨ **ENHANCED RELEASE**: Added comprehensive task table with all fields (taskId, taskName, taskOwner, taskIndustry, docUrl, toolsUsed, currency, timeHhmm, costPerHour, otherCosts, processRef, docStatus, taskStatus), Documentation Status and Task Health tables in Executive Summary, improved URL normalization (NR/NO URL treated as empty), and enhanced task overview page organization
 - **v2.8.0** - ✨ **NEW RELEASE**: Added Data Audit Process, Health Checks (Documentation & Attention), and Documentation Status Filter
+- **v2.0.0** - 🚀 **MAJOR RELEASE**: Complete UI/UX overhaul with enhanced Tasks Overview, Documentation Status tracking, Tools Analysis improvements, Quality Control alignment, and comprehensive export functionality
 
 ### 🚀 **Version 2.0.0 - Major Release Highlights**
 
